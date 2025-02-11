@@ -18,6 +18,11 @@ const (
 	dbname   = "postgres"
 )
 
+// IDGenerator is an interface for generating IDs
+type IDGenerator interface {
+	Generate() string
+}
+
 // TestResult holds the result of a test
 type TestResult struct {
 	IDType   string
@@ -41,16 +46,18 @@ func main() {
 
 	// Define the test cases
 	tests := []struct {
-		functionName string
-		idType       string
+		idType    string
+		generator IDGenerator
 	}{
-		{"test_big_serial_insert", "BigSerial"},
-		{"test_serial_uuid_insert", "SerialUUID"},
-		{"test_pg_ulid_insert", "PgULID"},
-		{"test_pgulid_insert", "PgULIDText"},
-		{"test_uuid_varchar_insert", "UUIDVarchar"},
-		{"test_uuidv4_insert", "UUIDv4"},
-		{"test_uuidv7_insert", "UUIDv7"},
+		{"UUIDv4", NewUUIDv4Generator()},
+		{"UUIDv7", NewUUIDv7Generator()},
+		{"ULID", NewULIDGenerator()},
+		{"CUID", NewCUIDGenerator()},
+		{"KSUID", NewKSUIDGenerator()},
+		{"NanoID", NewNanoIDGenerator()},
+		{"XID", NewXIDGenerator()},
+		{"Snowflake", NewSnowflakeGenerator()},
+		{"MongoID", NewMongoIDGenerator()},
 	}
 
 	// Define the row counts to test
@@ -60,9 +67,9 @@ func main() {
 	var results []TestResult
 	for _, test := range tests {
 		for _, count := range rowCounts {
-			duration, err := runTest(pool, test.functionName, count)
+			duration, err := runTest(pool, test.generator, count)
 			if err != nil {
-				log.Printf("Error running test %s with count %d: %v\n", test.functionName, count, err)
+				log.Printf("Error running test for %s with count %d: %v\n", test.idType, count, err)
 				continue
 			}
 			results = append(results, TestResult{IDType: test.idType, Count: count, Duration: duration})
@@ -75,16 +82,39 @@ func main() {
 	}
 }
 
-// runTest executes a test function in the database and returns the duration in milliseconds
-func runTest(pool *pgxpool.Pool, functionName string, count int64) (float64, error) {
-	var duration float64
-	query := fmt.Sprintf("SELECT %s($1)", functionName)
+// runTest generates IDs on the client side and inserts them into the database
+func runTest(pool *pgxpool.Pool, generator IDGenerator, count int64) (float64, error) {
 	start := time.Now()
-	err := pool.QueryRow(context.Background(), query, count).Scan(&duration)
+
+	// Begin a transaction
+	tx, err := pool.Begin(context.Background())
 	if err != nil {
 		return 0, err
 	}
+	defer tx.Rollback(context.Background())
+
+	// Prepare the insert statement
+	stmt, err := tx.Prepare(context.Background(), "insert_stmt", "INSERT INTO public.test_table (id, n) VALUES ($1, $2)")
+	if err != nil {
+		return 0, err
+	}
+
+	// Insert generated IDs
+	for i := int64(1); i <= count; i++ {
+		id := generator.Generate()
+		_, err := tx.Exec(context.Background(), stmt.Name, id, i)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	// Commit the transaction
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return 0, err
+	}
+
 	elapsed := time.Since(start).Milliseconds()
-	fmt.Printf("Test %s with count %d completed in %d ms\n", functionName, count, elapsed)
+	fmt.Printf("Test completed with count %d in %d ms\n", count, elapsed)
 	return float64(elapsed), nil
 }
