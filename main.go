@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jirevwe/compareids/ids"
 )
 
 // Config for database connection
@@ -17,11 +18,6 @@ const (
 	password = "postgres"
 	dbname   = "postgres"
 )
-
-// IDGenerator is an interface for generating IDs
-type IDGenerator interface {
-	Generate() string
-}
 
 // TestResult holds the result of a test
 type TestResult struct {
@@ -47,17 +43,17 @@ func main() {
 	// Define the test cases
 	tests := []struct {
 		idType    string
-		generator IDGenerator
+		generator ids.IDGenerator
 	}{
-		{"UUIDv4", NewUUIDv4Generator()},
-		{"UUIDv7", NewUUIDv7Generator()},
-		{"ULID", NewULIDGenerator()},
-		{"CUID", NewCUIDGenerator()},
-		{"KSUID", NewKSUIDGenerator()},
-		{"NanoID", NewNanoIDGenerator()},
-		{"XID", NewXIDGenerator()},
-		{"Snowflake", NewSnowflakeGenerator()},
-		{"MongoID", NewMongoIDGenerator()},
+		{"UUIDv4", ids.NewUUIDv4Generator()},
+		{"UUIDv7", ids.NewUUIDv7Generator()},
+		{"ULID", ids.NewULIDGenerator()},
+		{"CUID", ids.NewCUIDGenerator()},
+		{"KSUID", ids.NewKSUIDGenerator()},
+		{"NanoID", ids.NewNanoIDGenerator()},
+		{"XID", ids.NewXIDGenerator()},
+		{"Snowflake", ids.NewSnowflakeGenerator()},
+		{"MongoID", ids.NewMongoIDGenerator()},
 	}
 
 	// Define the row counts to test
@@ -83,7 +79,7 @@ func main() {
 }
 
 // runTest generates IDs on the client side and inserts them into the database
-func runTest(pool *pgxpool.Pool, generator IDGenerator, count int64) (float64, error) {
+func runTest(pool *pgxpool.Pool, generator ids.IDGenerator, count int64) (float64, error) {
 	start := time.Now()
 
 	// Begin a transaction
