@@ -54,13 +54,15 @@ func main() {
 		{"UUIDv7", ids.NewUUIDv7Generator()},
 		{"TypeID", ids.NewTypeIDGenerator()},
 		{"MongoID", ids.NewMongoIDGenerator()},
+		{"UUIDv4DB", ids.NewUUIDv4DBGenerator()},
 		{"UUIDv7DB", ids.NewUUIDv7DBGenerator()},
 		{"Snowflake", ids.NewSnowflakeGenerator()},
 		{"BigSerial", ids.NewBigSerialGenerator()},
+		{"UUIDv7Google", ids.NewUUIDv7GoogleGenerator()},
 	}
 
 	// Define the row counts to test
-	rowCounts := []uint64{1000000}
+	rowCounts := []uint64{100000}
 
 	// Run the tests and collect results
 	var results []TestResult
