@@ -26,3 +26,17 @@
 - **Compatibility**
     - How do the IDs perform across different database systems (e.g., PostgreSQL, MySQL, SQlite, MongoDB)?
     - Are there constraints for certain databases when using these ID types (e.g., maximum length, indexing efficiency)?
+
+### Result dump
+
+ID Type: XID, Count: 1000000, Duration: 5586.00 ms
+ID Type: ULID, Count: 1000000, Duration: 6199.00 ms
+ID Type: CUID, Count: 1000000, Duration: 6269.00 ms
+ID Type: KSUID, Count: 1000000, Duration: 8857.00 ms
+ID Type: NanoID, Count: 1000000, Duration: 8755.00 ms
+ID Type: UUIDv4, Count: 1000000, Duration: 10150.00 ms
+ID Type: UUIDv7, Count: 1000000, Duration: 7269.00 ms
+ID Type: TypeID, Count: 1000000, Duration: 6983.00 ms
+ID Type: MongoID, Count: 1000000, Duration: 6104.00 ms
+ID Type: Snowflake, Count: 1000000, Duration: 5805.00 ms
+ID Type: BigSerial, Count: 1000000, Duration: 3347.00 ms

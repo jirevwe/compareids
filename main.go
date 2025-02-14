@@ -54,6 +54,7 @@ func main() {
 		{"UUIDv7", ids.NewUUIDv7Generator()},
 		{"TypeID", ids.NewTypeIDGenerator()},
 		{"MongoID", ids.NewMongoIDGenerator()},
+		{"UUIDv7DB", ids.NewUUIDv7DBGenerator()},
 		{"Snowflake", ids.NewSnowflakeGenerator()},
 		{"BigSerial", ids.NewBigSerialGenerator()},
 	}

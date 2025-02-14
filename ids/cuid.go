@@ -31,17 +31,6 @@ func (g CUIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error 
 	return err
 }
 
-func (g CUIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
-	for i := int64(0); i < count; i++ {
-		id := g.Generate()
-		_, err := pool.Exec(context.Background(), "INSERT INTO cuid_table (id) VALUES ($1)", id)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (g CUIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
 	for i := uint64(0); i < count; i++ {
