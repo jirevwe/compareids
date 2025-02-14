@@ -22,7 +22,7 @@ const (
 // TestResult holds the result of a test
 type TestResult struct {
 	IDType   string
-	Count    int64
+	Count    uint64
 	Duration float64
 }
 
@@ -45,19 +45,21 @@ func main() {
 		idType    string
 		generator ids.IDGenerator
 	}{
-		{"UUIDv4", ids.NewUUIDv4Generator()},
-		{"UUIDv7", ids.NewUUIDv7Generator()},
+		{"XID", ids.NewXIDGenerator()},
 		{"ULID", ids.NewULIDGenerator()},
 		{"CUID", ids.NewCUIDGenerator()},
 		{"KSUID", ids.NewKSUIDGenerator()},
 		{"NanoID", ids.NewNanoIDGenerator()},
-		{"XID", ids.NewXIDGenerator()},
-		{"Snowflake", ids.NewSnowflakeGenerator()},
+		{"UUIDv4", ids.NewUUIDv4Generator()},
+		{"UUIDv7", ids.NewUUIDv7Generator()},
+		{"TypeID", ids.NewTypeIDGenerator()},
 		{"MongoID", ids.NewMongoIDGenerator()},
+		{"Snowflake", ids.NewSnowflakeGenerator()},
+		{"BigSerial", ids.NewBigSerialGenerator()},
 	}
 
 	// Define the row counts to test
-	rowCounts := []int64{1000, 10000, 100000}
+	rowCounts := []uint64{1000000}
 
 	// Run the tests and collect results
 	var results []TestResult
@@ -79,38 +81,45 @@ func main() {
 }
 
 // runTest generates IDs on the client side and inserts them into the database
-func runTest(pool *pgxpool.Pool, generator ids.IDGenerator, count int64) (float64, error) {
+func runTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64) (float64, error) {
 	start := time.Now()
+	ctx := context.Background()
 
 	// Begin a transaction
-	tx, err := pool.Begin(context.Background())
+	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return 0, err
 	}
-	defer tx.Rollback(context.Background())
+	defer tx.Rollback(ctx)
 
-	// Prepare the insert statement
-	stmt, err := tx.Prepare(context.Background(), "insert_stmt", "INSERT INTO public.test_table (id, n) VALUES ($1, $2)")
+	err = g.DropTable(ctx, pool)
 	if err != nil {
 		return 0, err
 	}
+
+	// create the table
+	err = g.CreateTable(ctx, pool)
+	if err != nil {
+		return 0, err
+	}
+
+	// err = g.InsertRecord(ctx, pool)
+	// if err != nil {
+	// 	return 0, err
+	// }
 
 	// Insert generated IDs
-	for i := int64(1); i <= count; i++ {
-		id := generator.Generate()
-		_, err := tx.Exec(context.Background(), stmt.Name, id, i)
-		if err != nil {
-			return 0, err
-		}
+	err = g.BulkWriteRecords(ctx, pool, count)
+	if err != nil {
+		return 0, err
 	}
 
 	// Commit the transaction
-	err = tx.Commit(context.Background())
+	err = tx.Commit(ctx)
 	if err != nil {
 		return 0, err
 	}
 
 	elapsed := time.Since(start).Milliseconds()
-	fmt.Printf("Test completed with count %d in %d ms\n", count, elapsed)
 	return float64(elapsed), nil
 }

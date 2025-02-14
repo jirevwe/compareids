@@ -1,15 +1,18 @@
 package ids
 
-import "github.com/jackc/pgx/v5/pgxpool"
+import (
+	"context"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 // IDGenerator is an interface for generating IDs
 type IDGenerator interface {
 	Generate() string
-	CreateTable(pool *pgxpool.Pool) error
-	DropTable(pool *pgxpool.Pool) error
-	InsertRecords(pool *pgxpool.Pool, count int64) error
-	BulkWriteRecords(pool *pgxpool.Pool, count int64) error
-	CollectStats(pool *pgxpool.Pool) (map[string]any, error)
+	CreateTable(ctx context.Context, pool *pgxpool.Pool) error
+	DropTable(ctx context.Context, pool *pgxpool.Pool) error
+	InsertRecord(ctx context.Context, pool *pgxpool.Pool) error
+	BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, recordsWritten uint64) error
+	CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error)
 }
 
 const statsQuery = `SELECT

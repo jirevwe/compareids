@@ -11,6 +11,8 @@ import (
 // ULIDGenerator generates ULID IDs
 type ULIDGenerator struct{}
 
+var _ IDGenerator = (*ULIDGenerator)(nil)
+
 func NewULIDGenerator() ULIDGenerator {
 	return ULIDGenerator{}
 }
@@ -19,41 +21,30 @@ func (g ULIDGenerator) Generate() string {
 	return ulid.Make().String()
 }
 
-func (g ULIDGenerator) CreateTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS ulid_table (id TEXT PRIMARY KEY)")
+func (g ULIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ulid_table (id TEXT PRIMARY KEY)")
 	return err
 }
 
-func (g ULIDGenerator) DropTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "DROP TABLE IF EXISTS ulid_table")
+func (g ULIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS ulid_table")
 	return err
 }
 
-func (g ULIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
-	for i := int64(0); i < count; i++ {
-		id := g.Generate()
-		_, err := pool.Exec(context.Background(), "INSERT INTO ulid_table (id) VALUES ($1)", id)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (g ULIDGenerator) BulkWriteRecords(pool *pgxpool.Pool, count int64) error {
+func (g ULIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := int64(0); i < count; i++ {
+	for i := uint64(0); i < count; i++ {
 		id := g.Generate()
 		batch.Queue("INSERT INTO ulid_table (id) VALUES ($1)", id)
 	}
-	br := pool.SendBatch(context.Background(), batch)
+	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g ULIDGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, error) {
+func (g ULIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 	var totalTableSize, dataSize, indexSize string
-	err := pool.QueryRow(context.Background(), statsQuery, "ulid_table").Scan(&totalTableSize, &dataSize, &indexSize)
+	err := pool.QueryRow(ctx, statsQuery, "ulid_table").Scan(&totalTableSize, &dataSize, &indexSize)
 	if err != nil {
 		return nil, err
 	}
@@ -61,4 +52,9 @@ func (g ULIDGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, error) 
 	stats["data_size"] = dataSize
 	stats["index_size"] = indexSize
 	return stats, nil
+}
+
+func (g ULIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO ulid_table (id) VALUES ($1)", g.Generate())
+	return err
 }

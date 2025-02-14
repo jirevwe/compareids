@@ -11,6 +11,8 @@ import (
 // NanoIDGenerator generates NanoIDs
 type NanoIDGenerator struct{}
 
+var _ IDGenerator = (*NanoIDGenerator)(nil)
+
 func NewNanoIDGenerator() NanoIDGenerator {
 	return NanoIDGenerator{}
 }
@@ -23,13 +25,13 @@ func (g NanoIDGenerator) Generate() string {
 	return id
 }
 
-func (g NanoIDGenerator) CreateTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS nanoid_table (id TEXT PRIMARY KEY)")
+func (g NanoIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS nanoid_table (id TEXT PRIMARY KEY)")
 	return err
 }
 
-func (g NanoIDGenerator) DropTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "DROP TABLE IF EXISTS nanoid_table")
+func (g NanoIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS nanoid_table")
 	return err
 }
 
@@ -44,20 +46,20 @@ func (g NanoIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
 	return nil
 }
 
-func (g NanoIDGenerator) BulkWriteRecords(pool *pgxpool.Pool, count int64) error {
+func (g NanoIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := int64(0); i < count; i++ {
+	for i := uint64(0); i < count; i++ {
 		id := g.Generate()
 		batch.Queue("INSERT INTO nanoid_table (id) VALUES ($1)", id)
 	}
-	br := pool.SendBatch(context.Background(), batch)
+	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g NanoIDGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, error) {
+func (g NanoIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 	var totalTableSize, dataSize, indexSize string
-	err := pool.QueryRow(context.Background(), statsQuery, "nanoid_table").Scan(&totalTableSize, &dataSize, &indexSize)
+	err := pool.QueryRow(ctx, statsQuery, "nanoid_table").Scan(&totalTableSize, &dataSize, &indexSize)
 	if err != nil {
 		return nil, err
 	}
@@ -65,4 +67,9 @@ func (g NanoIDGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, error
 	stats["data_size"] = dataSize
 	stats["index_size"] = indexSize
 	return stats, nil
+}
+
+func (g NanoIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO nanoid_table (id) VALUES ($1)", g.Generate())
+	return err
 }

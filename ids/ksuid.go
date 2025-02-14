@@ -11,6 +11,8 @@ import (
 // KSUIDGenerator generates KSUIDs
 type KSUIDGenerator struct{}
 
+var _ IDGenerator = (*KSUIDGenerator)(nil)
+
 func NewKSUIDGenerator() KSUIDGenerator {
 	return KSUIDGenerator{}
 }
@@ -19,41 +21,37 @@ func (g KSUIDGenerator) Generate() string {
 	return ksuid.New().String()
 }
 
-func (g KSUIDGenerator) CreateTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS ksuid_table (id TEXT PRIMARY KEY)")
+func (g KSUIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ksuid_table (id TEXT PRIMARY KEY)")
 	return err
 }
 
-func (g KSUIDGenerator) DropTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "DROP TABLE IF EXISTS ksuid_table")
+func (g KSUIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS ksuid_table")
 	return err
 }
 
-func (g KSUIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
-	for i := int64(0); i < count; i++ {
-		id := g.Generate()
-		_, err := pool.Exec(context.Background(), "INSERT INTO ksuid_table (id) VALUES ($1)", id)
-		if err != nil {
-			return err
-		}
+func (g KSUIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO ksuid_table (id) VALUES ($1)", g.Generate())
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (g KSUIDGenerator) BulkWriteRecords(pool *pgxpool.Pool, count int64) error {
+func (g KSUIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := int64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO ksuid_table (id) VALUES ($1)", id)
+	for i := uint64(0); i < count; i++ {
+		batch.Queue("INSERT INTO ksuid_table (id) VALUES ($1)", g.Generate())
 	}
-	br := pool.SendBatch(context.Background(), batch)
+	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g KSUIDGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, error) {
+func (g KSUIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 	var totalTableSize, dataSize, indexSize string
-	err := pool.QueryRow(context.Background(), statsQuery, "ksuid_table").Scan(&totalTableSize, &dataSize, &indexSize)
+	err := pool.QueryRow(ctx, statsQuery, "ksuid_table").Scan(&totalTableSize, &dataSize, &indexSize)
 	if err != nil {
 		return nil, err
 	}

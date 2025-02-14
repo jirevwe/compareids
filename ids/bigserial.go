@@ -11,6 +11,8 @@ import (
 
 type BigSerialGenerator struct{}
 
+var _ IDGenerator = (*BigSerialGenerator)(nil)
+
 func NewBigSerialGenerator() BigSerialGenerator {
 	return BigSerialGenerator{}
 }
@@ -20,35 +22,33 @@ func (g BigSerialGenerator) Generate() string {
 	return ""
 }
 
-func (g BigSerialGenerator) CreateTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS bigserial_table (id BIGSERIAL PRIMARY KEY, n BIGINT NOT NULL)")
+func (g BigSerialGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS bigserial_table (id BIGSERIAL PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g BigSerialGenerator) DropTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "DROP TABLE IF EXISTS bigserial_table")
+func (g BigSerialGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS bigserial_table")
 	return err
 }
 
-func (g BigSerialGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
-	for i := int64(0); i < count; i++ {
-		_, err := pool.Exec(context.Background(), "INSERT INTO bigserial_table DEFAULT VALUES")
-		if err != nil {
-			return err
-		}
+func (g BigSerialGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO bigserial_table DEFAULT VALUES")
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (g BigSerialGenerator) BulkWriteRecords(pool *pgxpool.Pool, count int64) error {
-	_, err := pool.Exec(context.Background(), "INSERT INTO bigserial_table (n) SELECT g.n FROM generate_series(1, $1) AS g(n)", count)
+func (g BigSerialGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+	_, err := pool.Exec(ctx, "INSERT INTO bigserial_table (n) SELECT g.n FROM generate_series(1, $1) AS g(n)", count)
 	return err
 }
 
-func (g BigSerialGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, error) {
+func (g BigSerialGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 	var totalTableSize, dataSize, indexSize string
-	err := pool.QueryRow(context.Background(), statsQuery, "bigserial_table").Scan(&totalTableSize, &dataSize, &indexSize)
+	err := pool.QueryRow(ctx, statsQuery, "bigserial_table").Scan(&totalTableSize, &dataSize, &indexSize)
 	if err != nil {
 		return nil, err
 	}

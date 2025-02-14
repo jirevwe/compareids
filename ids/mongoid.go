@@ -11,6 +11,8 @@ import (
 // MongoIDGenerator generates MongoDB ObjectIDs
 type MongoIDGenerator struct{}
 
+var _ IDGenerator = (*MongoIDGenerator)(nil)
+
 func NewMongoIDGenerator() MongoIDGenerator {
 	return MongoIDGenerator{}
 }
@@ -19,13 +21,13 @@ func (g MongoIDGenerator) Generate() string {
 	return primitive.NewObjectID().Hex()
 }
 
-func (g MongoIDGenerator) CreateTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS mongoid_table (id TEXT PRIMARY KEY)")
+func (g MongoIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS mongoid_table (id TEXT PRIMARY KEY)")
 	return err
 }
 
-func (g MongoIDGenerator) DropTable(pool *pgxpool.Pool) error {
-	_, err := pool.Exec(context.Background(), "DROP TABLE IF EXISTS mongoid_table")
+func (g MongoIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS mongoid_table")
 	return err
 }
 
@@ -40,20 +42,20 @@ func (g MongoIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
 	return nil
 }
 
-func (g MongoIDGenerator) BulkWriteRecords(pool *pgxpool.Pool, count int64) error {
+func (g MongoIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := int64(0); i < count; i++ {
+	for i := uint64(0); i < count; i++ {
 		id := g.Generate()
 		batch.Queue("INSERT INTO mongoid_table (id) VALUES ($1)", id)
 	}
-	br := pool.SendBatch(context.Background(), batch)
+	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g MongoIDGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, error) {
+func (g MongoIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 	var totalTableSize, dataSize, indexSize string
-	err := pool.QueryRow(context.Background(), statsQuery, "mongoid_table").Scan(&totalTableSize, &dataSize, &indexSize)
+	err := pool.QueryRow(ctx, statsQuery, "mongoid_table").Scan(&totalTableSize, &dataSize, &indexSize)
 	if err != nil {
 		return nil, err
 	}
@@ -61,4 +63,9 @@ func (g MongoIDGenerator) CollectStats(pool *pgxpool.Pool) (map[string]any, erro
 	stats["data_size"] = dataSize
 	stats["index_size"] = indexSize
 	return stats, nil
+}
+
+func (g MongoIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO mongoid_table (id) VALUES ($1)", g.Generate())
+	return err
 }
