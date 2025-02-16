@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"text/template"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -64,13 +66,16 @@ func main() {
 	}
 
 	// Define the row counts to test
-	rowCounts := []uint64{10000000}
+	rowCounts := []uint64{1000, 10000, 100000}
+
+	// Collect all stats
+	allStats := make(map[string][]map[string]string)
 
 	// Run the tests and collect results
 	var results []TestResult
 	for _, test := range tests {
 		for _, count := range rowCounts {
-			duration, err := runTest(pool, test.generator, count)
+			duration, err := runTest(pool, test.generator, count, test.idType, allStats)
 			if err != nil {
 				log.Printf("Error running test for %s with count %d: %v\n", test.idType, count, err)
 				continue
@@ -79,14 +84,48 @@ func main() {
 		}
 	}
 
-	// Print results
-	for _, result := range results {
-		fmt.Printf("ID Type: %s, Count: %d, Duration: %.2f ms\n", result.IDType, result.Count, result.Duration)
+	// Write all stats to a single JSON file
+	file, err := os.Create("all_stats.json")
+	if err != nil {
+		log.Fatalf("Unable to create JSON file: %v\n", err)
+	}
+	defer file.Close()
+
+	jsonTemplate := `{
+	{{range $idType, $statsList := .}}
+	"{{$idType}}": [
+		{{range $index, $stats := $statsList}}
+		{
+			"count": "{{index $stats "count"}}",
+			"total_table_size": "{{index $stats "total_table_size"}}",
+			"data_size": "{{index $stats "data_size"}}",
+			"index_size": "{{index $stats "index_size"}}"
+		}{{if not (last $index $statsList)}},{{end}}
+		{{end}}
+	],
+	{{end}}
+}`
+
+	// Define a custom function map with a 'last' function
+	funcMap := template.FuncMap{
+		"last": func(x int, a interface{}) bool {
+			return x == len(a.([]map[string]string))-1
+		},
+	}
+
+	tmpl, err := template.New("json").Funcs(funcMap).Parse(jsonTemplate)
+	if err != nil {
+		log.Fatalf("Unable to parse JSON template: %v\n", err)
+	}
+
+	err = tmpl.Execute(file, allStats)
+	if err != nil {
+		log.Fatalf("Unable to execute JSON template: %v\n", err)
 	}
 }
 
 // runTest generates IDs on the client side and inserts them into the database
-func runTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64) (float64, error) {
+func runTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64, idType string, allStats map[string][]map[string]string) (float64, error) {
 	start := time.Now()
 	ctx := context.Background()
 
@@ -118,6 +157,26 @@ func runTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64) (float64, erro
 	if err != nil {
 		return 0, err
 	}
+
+	// Collect stats after inserting records
+	stats, err := g.CollectStats(ctx, pool)
+	if err != nil {
+		return 0, err
+	}
+
+	// Convert stats to map[string]string
+	convertedStats := make(map[string]string)
+	for k, v := range stats {
+		if str, ok := v.(string); ok {
+			convertedStats[k] = str
+		}
+	}
+
+	// Add the count to the convertedStats map
+	convertedStats["count"] = fmt.Sprintf("%d", count)
+
+	// Collect all stats
+	allStats[idType] = append(allStats[idType], convertedStats)
 
 	// Commit the transaction
 	err = tx.Commit(ctx)
