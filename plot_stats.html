@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Comparison Stats</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #24292e;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        select {
+            padding: 5px 10px;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid #e1e4e8;
+        }
+
+        th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+
+        .shadow {
+            background-color: #f6f8fa;
+        }
+
+        .best {
+            font-weight: bold;
+        }
+
+        .size-cell {
+            font-family: monospace;
+        }
+
+        /* Updated color gradients */
+        .ratio-1 {
+            background-color: rgb(232, 255, 232);
+            color: black;
+        }
+        .ratio-below {
+            background-color: rgb(232, 255, 232);
+            color: black;
+        }
+        .ratio-1-15 {
+            background-color: rgb(255, 240, 240);
+            color: black;
+        }
+        .ratio-15-2 {
+            background-color: rgb(255, 220, 220);
+            color: black;
+        }
+        .ratio-2-3 {
+            background-color: rgb(255, 200, 200);
+            color: black;
+        }
+        .ratio-above-3 {
+            background-color: rgb(255, 180, 180);
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>ID Types Comparison</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="scale-select">Scale:</label>
+            <select id="scale-select" onchange="updateTable()">
+                <option value="1000">1,000 rows</option>
+                <option value="10000">10,000 rows</option>
+                <option value="100000">100,000 rows</option>
+            </select>
+        </div>
+    </div>
+
+    <table id="comparison-table">
+        <thead>
+            <tr>
+                <th>ID Type</th>
+                <th>Total Table Size</th>
+                <th>Data Size</th>
+                <th>Index Size</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+        </tbody>
+    </table>
+
+    <script>
+        const data = {
+            "BigSerial": [
+                {"count": "1000", "total_table_size": 114688, "data_size": 49152, "index_size": 40960},
+                {"count": "10000", "total_table_size": 720896, "data_size": 450560, "index_size": 245760},
+                {"count": "100000", "total_table_size": 6717440, "data_size": 4431872, "index_size": 2260992}
+            ],
+            "CUID": [
+                {"count": "1000", "total_table_size": 163840, "data_size": 65536, "index_size": 65536},
+                {"count": "10000", "total_table_size": 1155072, "data_size": 606208, "index_size": 516096},
+                {"count": "100000", "total_table_size": 11059200, "data_size": 6029312, "index_size": 4997120}
+            ],
+            "KSUID": [
+                {"count": "1000", "total_table_size": 188416, "data_size": 65536, "index_size": 90112},
+                {"count": "10000", "total_table_size": 1302528, "data_size": 606208, "index_size": 663552},
+                {"count": "100000", "total_table_size": 12320768, "data_size": 6029312, "index_size": 6258688}
+            ],
+            "MongoID": [
+                {"count": "1000", "total_table_size": 163840, "data_size": 65536, "index_size": 65536},
+                {"count": "10000", "total_table_size": 1155072, "data_size": 606208, "index_size": 516096},
+                {"count": "100000", "total_table_size": 11059200, "data_size": 6029312, "index_size": 4997120}
+            ],
+            "NanoID": [
+                {"count": "1000", "total_table_size": 163840, "data_size": 57344, "index_size": 73728},
+                {"count": "10000", "total_table_size": 1138688, "data_size": 524288, "index_size": 581632},
+                {"count": "100000", "total_table_size": 10362880, "data_size": 5218304, "index_size": 5111808}
+            ],
+            "Snowflake": [
+                {"count": "1000", "total_table_size": 147456, "data_size": 57344, "index_size": 57344},
+                {"count": "10000", "total_table_size": 983040, "data_size": 524288, "index_size": 425984},
+                {"count": "100000", "total_table_size": 9330688, "data_size": 5218304, "index_size": 4079616}
+            ],
+            "TypeID": [
+                {"count": "1000", "total_table_size": 196608, "data_size": 73728, "index_size": 90112},
+                {"count": "10000", "total_table_size": 1441792, "data_size": 688128, "index_size": 720896},
+                {"count": "100000", "total_table_size": 14073856, "data_size": 6832128, "index_size": 7208960}
+            ],
+            "ULID": [
+                {"count": "1000", "total_table_size": 163840, "data_size": 65536, "index_size": 65536},
+                {"count": "10000", "total_table_size": 1155072, "data_size": 606208, "index_size": 516096},
+                {"count": "100000", "total_table_size": 11059200, "data_size": 6029312, "index_size": 4997120}
+            ],
+            "ULIDDb": [
+                {"count": "1000", "total_table_size": 180224, "data_size": 73728, "index_size": 73728},
+                {"count": "10000", "total_table_size": 1490944, "data_size": 688128, "index_size": 770048},
+                {"count": "100000", "total_table_size": 14254080, "data_size": 6832128, "index_size": 7389184}
+            ],
+            "ULIDPg": [
+                {"count": "1000", "total_table_size": 147456, "data_size": 57344, "index_size": 65536},
+                {"count": "10000", "total_table_size": 991232, "data_size": 524288, "index_size": 442368},
+                {"count": "100000", "total_table_size": 9568256, "data_size": 5218304, "index_size": 4325376}
+            ],
+            "UUIDv4": [
+                {"count": "1000", "total_table_size": 196608, "data_size": 73728, "index_size": 90112},
+                {"count": "10000", "total_table_size": 1466368, "data_size": 688128, "index_size": 745472},
+                {"count": "100000", "total_table_size": 14786560, "data_size": 6832128, "index_size": 7921664}
+            ],
+            "UUIDv4Db": [
+                {"count": "1000", "total_table_size": 139264, "data_size": 57344, "index_size": 57344},
+                {"count": "10000", "total_table_size": 942080, "data_size": 524288, "index_size": 393216},
+                {"count": "100000", "total_table_size": 9478144, "data_size": 5218304, "index_size": 4235264}
+            ],
+            "UUIDv7": [
+                {"count": "1000", "total_table_size": 188416, "data_size": 73728, "index_size": 81920},
+                {"count": "10000", "total_table_size": 1474560, "data_size": 688128, "index_size": 753664},
+                {"count": "100000", "total_table_size": 13885440, "data_size": 6832128, "index_size": 7020544}
+            ],
+            "UUIDv7Db": [
+                {"count": "1000", "total_table_size": 131072, "data_size": 57344, "index_size": 49152},
+                {"count": "10000", "total_table_size": 884736, "data_size": 524288, "index_size": 335872},
+                {"count": "100000", "total_table_size": 8421376, "data_size": 5218304, "index_size": 3178496}
+            ],
+            "UUIDv7Google": [
+                {"count": "1000", "total_table_size": 188416, "data_size": 73728, "index_size": 81920},
+                {"count": "10000", "total_table_size": 1327104, "data_size": 688128, "index_size": 606208},
+                {"count": "100000", "total_table_size": 12795904, "data_size": 6832128, "index_size": 5931008}
+            ],
+            "XID": [
+                {"count": "1000", "total_table_size": 147456, "data_size": 57344, "index_size": 57344},
+                {"count": "10000", "total_table_size": 983040, "data_size": 524288, "index_size": 425984},
+                {"count": "100000", "total_table_size": 9330688, "data_size": 5218304, "index_size": 4079616}
+            ]
+        };
+
+        function formatBytes(bytes) {
+            const sizes = ['B', 'KiB', 'MiB', 'GiB'];
+            if (bytes === 0) return '0 B';
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+        }
+
+        function colorize(ratio) {
+            if (ratio === 1) return 'ratio-1';
+            if (ratio < 1) return 'ratio-below';
+            if (ratio <= 1.5) return 'ratio-1-15';
+            if (ratio <= 2.0) return 'ratio-15-2';
+            if (ratio <= 3.0) return 'ratio-2-3';
+            return 'ratio-above-3';
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById('table-body');
+            const selectedCount = document.getElementById('scale-select').value;
+            
+            // Clear the table
+            tableBody.innerHTML = '';
+            
+            // Find minimum sizes for the selected count
+            const minTotalSize = Math.min(...Object.values(data).map(stats => 
+                stats.find(s => s.count === selectedCount).total_table_size
+            ));
+            const minDataSize = Math.min(...Object.values(data).map(stats => 
+                stats.find(s => s.count === selectedCount).data_size
+            ));
+            const minIndexSize = Math.min(...Object.values(data).map(stats => 
+                stats.find(s => s.count === selectedCount).index_size
+            ));
+
+            // Add rows for each ID type
+            Object.entries(data).forEach(([idType, stats]) => {
+                const stat = stats.find(s => s.count === selectedCount);
+                const row = document.createElement('tr');
+                
+                const totalRatio = stat.total_table_size / minTotalSize;
+                const dataRatio = stat.data_size / minDataSize;
+                const indexRatio = stat.index_size / minIndexSize;
+
+                row.innerHTML = `
+                    <td>${idType}</td>
+                    <td class="size-cell ${colorize(totalRatio)}">${formatBytes(stat.total_table_size)} (×${totalRatio.toFixed(2)})</td>
+                    <td class="size-cell ${colorize(dataRatio)}">${formatBytes(stat.data_size)} (×${dataRatio.toFixed(2)})</td>
+                    <td class="size-cell ${colorize(indexRatio)}">${formatBytes(stat.index_size)} (×${indexRatio.toFixed(2)})</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Initial render
+        updateTable();
+    </script>
+</body>
+</html> 

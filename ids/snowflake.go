@@ -55,12 +55,14 @@ func (g SnowflakeGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.
 
 func (g SnowflakeGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
-	var count int64
-	err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM snowflake_table").Scan(&count)
+	var totalTableSize, dataSize, indexSize string
+	err := pool.QueryRow(ctx, statsQuery, "snowflake_table").Scan(&totalTableSize, &dataSize, &indexSize)
 	if err != nil {
 		return nil, err
 	}
-	stats["count"] = count
+	stats["total_table_size"] = totalTableSize
+	stats["data_size"] = dataSize
+	stats["index_size"] = indexSize
 	return stats, nil
 }
 

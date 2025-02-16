@@ -97,9 +97,9 @@ func main() {
 		{{range $index, $stats := $statsList}}
 		{
 			"count": "{{index $stats "count"}}",
-			"total_table_size": "{{index $stats "total_table_size"}}",
-			"data_size": "{{index $stats "data_size"}}",
-			"index_size": "{{index $stats "index_size"}}"
+			"total_table_size": {{index $stats "total_table_size"}},
+			"data_size": {{index $stats "data_size"}},
+			"index_size": {{index $stats "index_size"}}
 		}{{if not (last $index $statsList)}},{{end}}
 		{{end}}
 	],
@@ -111,6 +111,13 @@ func main() {
 		"last": func(x int, a interface{}) bool {
 			return x == len(a.([]map[string]string))-1
 		},
+		"keys": func(m map[string][]map[string]string) []string {
+			keys := make([]string, 0, len(m))
+			for k := range m {
+				keys = append(keys, k)
+			}
+			return keys
+		},
 	}
 
 	tmpl, err := template.New("json").Funcs(funcMap).Parse(jsonTemplate)
@@ -118,6 +125,7 @@ func main() {
 		log.Fatalf("Unable to parse JSON template: %v\n", err)
 	}
 
+	fmt.Printf("%+v\n", allStats)
 	err = tmpl.Execute(file, allStats)
 	if err != nil {
 		log.Fatalf("Unable to execute JSON template: %v\n", err)

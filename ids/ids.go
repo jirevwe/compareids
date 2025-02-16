@@ -16,6 +16,6 @@ type IDGenerator interface {
 }
 
 const statsQuery = `SELECT
-	pg_size_pretty(pg_total_relation_size($1)) AS total_table_size, 
-	pg_size_pretty(pg_relation_size($1)) AS data_size, 
-	pg_size_pretty(pg_indexes_size($1)) AS index_size;`
+	pg_total_relation_size($1) AS total_table_size, 
+	pg_relation_size($1) AS data_size, 
+	pg_indexes_size($1) AS index_size;`
