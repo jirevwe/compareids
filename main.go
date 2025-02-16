@@ -66,7 +66,7 @@ func main() {
 	}
 
 	// Define the row counts to test
-	rowCounts := []uint64{1000, 10000, 100000}
+	rowCounts := []uint64{1000, 10000, 100000, 1000000}
 
 	// Collect all stats
 	allStats := make(map[string][]map[string]string)
@@ -110,13 +110,6 @@ func main() {
 	funcMap := template.FuncMap{
 		"last": func(x int, a interface{}) bool {
 			return x == len(a.([]map[string]string))-1
-		},
-		"keys": func(m map[string][]map[string]string) []string {
-			keys := make([]string, 0, len(m))
-			for k := range m {
-				keys = append(keys, k)
-			}
-			return keys
 		},
 	}
 
