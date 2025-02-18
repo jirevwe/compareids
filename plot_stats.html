@@ -111,6 +111,13 @@
                 </td>
             </tr>
             <tr>
+                <th>Metric: </th>
+                <td id="selectors_metric">
+                    <a class="selector selector-active" id="selector-metric-size">Storage Size</a>
+                    <a class="selector" id="selector-metric-rate">Insertion Rate</a>
+                </td>
+            </tr>
+            <tr>
                 <th>Scale: </th>
                 <td id="selectors_scale">
                     <!-- Scale selectors will be dynamically added here -->
@@ -157,9 +164,28 @@
             const selectedCount = activeScaleSelector ? activeScaleSelector.dataset.value : "1000";
             const activeSelectors = document.querySelectorAll('#selectors_system .selector-active[data-name]');
             const selectedTypes = Array.from(activeSelectors).map(el => el.dataset.name);
+            const selectedMetric = document.querySelector('#selectors_metric .selector-active').id;
             
             // Clear the table
             tableBody.innerHTML = '';
+            
+            // Update table headers based on metric
+            const tableHeaders = document.querySelector('#comparison-table thead tr');
+            if (selectedMetric === 'selector-metric-size') {
+                tableHeaders.innerHTML = `
+                    <th>ID Type</th>
+                    <th>Total Table Size</th>
+                    <th>Data Size</th>
+                    <th>Index Size</th>
+                    <th>Duration (ms)</th>
+                `;
+            } else if (selectedMetric === 'selector-metric-rate') {
+                tableHeaders.innerHTML = `
+                    <th>ID Type</th>
+                    <th>Records/Second</th>
+                    <th>Duration (ms)</th>
+                `;
+            }
             
             // Filter data for selected types
             const filteredData = {};
@@ -169,33 +195,59 @@
                 }
             });
 
-            // Find minimum sizes for the selected data
-            const minTotalSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.total_table_size)));
-            const minDataSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.data_size)));
-            const minIndexSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.index_size)));
-            const minDuration = Math.min(...Object.values(filteredData).map(s => s.duration));
+            if (selectedMetric === 'selector-metric-size') {
+                // Find minimum sizes for the selected data
+                const minTotalSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.total_table_size)));
+                const minDataSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.data_size)));
+                const minIndexSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.index_size)));
+                const minDuration = Math.min(...Object.values(filteredData).map(s => s.duration));
 
-            // Add rows for each selected ID type
-            selectedTypes.forEach(idType => {
-                const stats = filteredData[idType];
-                if (!stats) return;
+                // Add rows for each selected ID type
+                selectedTypes.forEach(idType => {
+                    const stats = filteredData[idType];
+                    if (!stats) return;
 
-                const row = document.createElement('tr');
-                
-                const totalRatio = parseInt(stats.total_table_size) / minTotalSize;
-                const dataRatio = parseInt(stats.data_size) / minDataSize;
-                const indexRatio = parseInt(stats.index_size) / minIndexSize;
-                const durationRatio = stats.duration / minDuration;
+                    const row = document.createElement('tr');
+                    
+                    const totalRatio = parseInt(stats.total_table_size) / minTotalSize;
+                    const dataRatio = parseInt(stats.data_size) / minDataSize;
+                    const indexRatio = parseInt(stats.index_size) / minIndexSize;
+                    const durationRatio = stats.duration / minDuration;
 
-                row.innerHTML = `
-                    <td>${idType}</td>
-                    <td class="size-cell ${colorize(totalRatio)}">${formatBytes(parseInt(stats.total_table_size))} (&times;${totalRatio.toFixed(2)})</td>
-                    <td class="size-cell ${colorize(dataRatio)}">${formatBytes(parseInt(stats.data_size))} (&times;${dataRatio.toFixed(2)})</td>
-                    <td class="size-cell ${colorize(indexRatio)}">${formatBytes(parseInt(stats.index_size))} (&times;${indexRatio.toFixed(2)})</td>
-                    <td class="size-cell ${colorize(durationRatio)}">${stats.duration.toFixed(2)} (&times;${durationRatio.toFixed(2)})</td>
-                `;
-                tableBody.appendChild(row);
-            });
+                    row.innerHTML = `
+                        <td>${idType}</td>
+                        <td class="size-cell ${colorize(totalRatio)}">${formatBytes(parseInt(stats.total_table_size))} (&times;${totalRatio.toFixed(2)})</td>
+                        <td class="size-cell ${colorize(dataRatio)}">${formatBytes(parseInt(stats.data_size))} (&times;${dataRatio.toFixed(2)})</td>
+                        <td class="size-cell ${colorize(indexRatio)}">${formatBytes(parseInt(stats.index_size))} (&times;${indexRatio.toFixed(2)})</td>
+                        <td class="size-cell ${colorize(durationRatio)}">${stats.duration.toFixed(2)} (&times;${durationRatio.toFixed(2)})</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else if (selectedMetric === 'selector-metric-rate') {
+                // Calculate insertion rates
+                const rates = Object.entries(filteredData).map(([type, stats]) => ({
+                    type,
+                    recordsPerSecond: (stats.count / stats.duration) * 1000,
+                    count: stats.count,
+                    duration: stats.duration
+                }));
+
+                // Find maximum rate for ratio calculation
+                const maxRate = Math.max(...rates.map(r => r.recordsPerSecond));
+
+                // Add rows for each selected ID type
+                rates.forEach(({type, recordsPerSecond, count, duration}) => {
+                    const row = document.createElement('tr');
+                    const ratio = recordsPerSecond / maxRate;
+                    
+                    row.innerHTML = `
+                        <td>${type}</td>
+                        <td class="size-cell ${colorize(1/ratio)}">${Math.round(recordsPerSecond).toLocaleString()} (&times;${ratio.toFixed(2)})</td>
+                        <td class="size-cell">${duration.toFixed(2)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
 
             document.getElementById('comparison-table').style.display = 'table';
         }
@@ -214,6 +266,18 @@
                     updateTable();
                 });
                 container.appendChild(selector);
+            });
+
+            // Initialize metric selectors
+            document.querySelectorAll('#selectors_metric .selector').forEach(selector => {
+                selector.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('#selectors_metric .selector').forEach(s => {
+                        s.classList.remove('selector-active');
+                    });
+                    this.classList.add('selector-active');
+                    updateTable();
+                });
             });
 
             // Initialize scale selectors dynamically

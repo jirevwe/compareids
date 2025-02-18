@@ -156,20 +156,6 @@ func main() {
 	if err := encoder.Encode(templateData); err != nil {
 		log.Fatalf("Unable to write template data to JSON file: %v\n", err)
 	}
-
-	// Write all stats to a single JSON file
-	file, err := os.Create("db_size_stats.json")
-	if err != nil {
-		log.Fatalf("Unable to create JSON file: %v\n", err)
-	}
-	defer file.Close()
-
-	// Write the stats directly as JSON
-	encoder = json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(dbSizeStats); err != nil {
-		log.Fatalf("Unable to write stats to JSON file: %v\n", err)
-	}
 }
 
 // runTest generates IDs on the client side and inserts them into the database
