@@ -20,6 +20,10 @@ func (g UUIDv7DBGenerator) Generate() string {
 	return ""
 }
 
+func (g UUIDv7DBGenerator) Name() string {
+	return "UUIDv7 (DB) - UUID"
+}
+
 func (g UUIDv7DBGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
 	err := g.LoadUUID7Function(ctx, pool)
 	if err != nil {

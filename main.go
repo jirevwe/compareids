@@ -28,6 +28,11 @@ type TestResult struct {
 	Duration float64
 }
 
+// TestCase represents a single ID generator test case
+type TestCase struct {
+	generator ids.IDGenerator
+}
+
 func main() {
 	// Create a connection pool
 	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, password, host, port, dbname)
@@ -43,49 +48,56 @@ func main() {
 	defer pool.Close()
 
 	// Define the test cases
-	tests := []struct {
-		idType    string
-		generator ids.IDGenerator
-	}{
-		{"XID", ids.NewXIDGenerator()},
-		{"ULID", ids.NewULIDGenerator()},
-		{"CUID", ids.NewCUIDGenerator()},
-		{"KSUID", ids.NewKSUIDGenerator()},
-		{"NanoID", ids.NewNanoIDGenerator()},
-		{"UUIDv4", ids.NewUUIDv4Generator()},
-		{"UUIDv7", ids.NewUUIDv7Generator()},
-		{"TypeID", ids.NewTypeIDGenerator()},
-		{"MongoID", ids.NewMongoIDGenerator()},
-		{"UUIDv4Db", ids.NewUUIDv4DBGenerator()},
-		{"UUIDv7Db", ids.NewUUIDv7DBGenerator()},
-		{"Snowflake", ids.NewSnowflakeGenerator()},
-		{"BigSerial", ids.NewBigSerialGenerator()},
-		{"UUIDv7Google", ids.NewUUIDv7GoogleGenerator()},
-		{"ULIDDb", ids.NewULIDDBGenerator()},
-		{"ULIDPg", ids.NewULIDPGGenerator()},
+	tests := []TestCase{
+		{ids.NewXIDGenerator()},
+		{ids.NewULIDGenerator()},
+		{ids.NewCUIDGenerator()},
+		{ids.NewKSUIDGenerator()},
+		{ids.NewNanoIDGenerator()},
+		{ids.NewUUIDv4Generator()},
+		{ids.NewUUIDv7Generator()},
+		{ids.NewTypeIDGenerator()},
+		{ids.NewMongoIDGenerator()},
+		{ids.NewUUIDv4DBGenerator()},
+		{ids.NewUUIDv7DBGenerator()},
+		{ids.NewSnowflakeGenerator()},
+		{ids.NewBigSerialGenerator()},
+		{ids.NewUUIDv7GoogleGenerator()},
+		{ids.NewULIDDBGenerator()},
+		{ids.NewULIDPGGenerator()},
 	}
 
 	// Define the row counts to test
-	rowCounts := []uint64{1000, 10000, 100000, 1000000}
+	rowCounts := []uint64{1_000, 10_000, 100_000, 1_000_000}
 
 	// Collect all stats
-	allStats := make(map[string][]map[string]string)
+	dbSizeStats := make(map[string][]map[string]string)
+	insertDurationStats := make(map[string][]float64)
 
-	// Run the tests and collect results
+	// Run the tests and collect stats
 	var results []TestResult
 	for _, test := range tests {
 		for _, count := range rowCounts {
-			duration, err := runTest(pool, test.generator, count, test.idType, allStats)
+			duration, err := runTest(pool, test.generator, count, test.generator.Name(), dbSizeStats)
 			if err != nil {
-				log.Printf("Error running test for %s with count %d: %v\n", test.idType, count, err)
+				log.Printf("Error running test for %s with count %d: %v\n", test.generator.Name(), count, err)
 				continue
 			}
-			results = append(results, TestResult{IDType: test.idType, Count: count, Duration: duration})
+
+			insertDurationStats[test.generator.Name()] = append(insertDurationStats[test.generator.Name()], duration)
+			results = append(results, TestResult{IDType: test.generator.Name(), Count: count, Duration: duration})
+
+			log.Printf("Took %vms to insert %d records for %s\n", duration, count, test.generator.Name())
+		}
+
+		// Drop the table after all row counts have been tested for this generator
+		if err := test.generator.DropTable(context.Background(), pool); err != nil {
+			log.Printf("Error dropping table for %s: %v\n", test.generator.Name(), err)
 		}
 	}
 
 	// Write all stats to a single JSON file
-	file, err := os.Create("all_stats.json")
+	file, err := os.Create("db_size_stats.json")
 	if err != nil {
 		log.Fatalf("Unable to create JSON file: %v\n", err)
 	}
@@ -118,8 +130,7 @@ func main() {
 		log.Fatalf("Unable to parse JSON template: %v\n", err)
 	}
 
-	fmt.Printf("%+v\n", allStats)
-	err = tmpl.Execute(file, allStats)
+	err = tmpl.Execute(file, dbSizeStats)
 	if err != nil {
 		log.Fatalf("Unable to execute JSON template: %v\n", err)
 	}

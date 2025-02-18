@@ -20,7 +20,7 @@ func NewTypeIDGenerator() TypeIDGenerator {
 type CustomPrefix struct{}
 
 func (CustomPrefix) Prefix() string {
-	return "custom"
+	return ""
 }
 
 func (g TypeIDGenerator) Generate() string {
@@ -31,8 +31,12 @@ func (g TypeIDGenerator) Generate() string {
 	return id.String()
 }
 
+func (g TypeIDGenerator) Name() string {
+	return "TypeID - VARCHAR(27)"
+}
+
 func (g TypeIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS typeid_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS typeid_table (id VARCHAR(27) PRIMARY KEY)")
 	return err
 }
 

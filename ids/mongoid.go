@@ -21,8 +21,12 @@ func (g MongoIDGenerator) Generate() string {
 	return primitive.NewObjectID().Hex()
 }
 
+func (g MongoIDGenerator) Name() string {
+	return "MongoDB ObjectID - VARCHAR(24)"
+}
+
 func (g MongoIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS mongoid_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS mongoid_table (id VARCHAR(24) PRIMARY KEY)")
 	return err
 }
 

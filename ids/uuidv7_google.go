@@ -25,8 +25,12 @@ func (g UUIDv7GoogleGenerator) Generate() string {
 	return id.String()
 }
 
+func (g UUIDv7GoogleGenerator) Name() string {
+	return "UUIDv7 (Google) - UUID"
+}
+
 func (g UUIDv7GoogleGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv7_google_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv7_google_table (id UUID PRIMARY KEY)")
 	return err
 }
 

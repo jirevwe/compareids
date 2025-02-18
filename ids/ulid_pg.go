@@ -20,6 +20,10 @@ func (g ULIDPgGenerator) Generate() string {
 	return ""
 }
 
+func (g ULIDPgGenerator) Name() string {
+	return "ULID (PG) - ULID"
+}
+
 func (g ULIDPgGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
 	err := g.LoadULIDFunction(ctx, pool)
 	if err != nil {

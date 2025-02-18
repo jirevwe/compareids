@@ -20,6 +20,10 @@ func (g UUIDv4DBGenerator) Generate() string {
 	return ""
 }
 
+func (g UUIDv4DBGenerator) Name() string {
+	return "UUIDv4 (DB) - UUID"
+}
+
 func (g UUIDv4DBGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv4_table (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), n BIGINT NOT NULL)")
 	return err

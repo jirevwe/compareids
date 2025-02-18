@@ -2,6 +2,7 @@ package ids
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -13,6 +14,7 @@ type IDGenerator interface {
 	InsertRecord(ctx context.Context, pool *pgxpool.Pool) error
 	BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, recordsWritten uint64) error
 	CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error)
+	Name() string
 }
 
 const statsQuery = `SELECT

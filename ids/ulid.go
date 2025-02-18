@@ -21,8 +21,12 @@ func (g ULIDGenerator) Generate() string {
 	return ulid.Make().String()
 }
 
+func (g ULIDGenerator) Name() string {
+	return "ULID - VARCHAR(26)"
+}
+
 func (g ULIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ulid_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ulid_table (id VARCHAR(26) PRIMARY KEY)")
 	return err
 }
 

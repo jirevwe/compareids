@@ -25,8 +25,12 @@ func (g NanoIDGenerator) Generate() string {
 	return id
 }
 
+func (g NanoIDGenerator) Name() string {
+	return "NanoID - VARCHAR(21)"
+}
+
 func (g NanoIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS nanoid_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS nanoid_table (id VARCHAR(21) PRIMARY KEY)")
 	return err
 }
 

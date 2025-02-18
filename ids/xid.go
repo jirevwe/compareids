@@ -21,8 +21,12 @@ func (g XIDGenerator) Generate() string {
 	return xid.New().String()
 }
 
+func (g XIDGenerator) Name() string {
+	return "XID - VARCHAR(20)"
+}
+
 func (g XIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS xid_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS xid_table (id VARCHAR(20) PRIMARY KEY)")
 	return err
 }
 

@@ -21,8 +21,12 @@ func (g KSUIDGenerator) Generate() string {
 	return ksuid.New().String()
 }
 
+func (g KSUIDGenerator) Name() string {
+	return "KSUID - VARCHAR(27)"
+}
+
 func (g KSUIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ksuid_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ksuid_table (id VARCHAR(27) PRIMARY KEY)")
 	return err
 }
 

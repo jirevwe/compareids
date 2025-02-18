@@ -26,10 +26,14 @@ func (g SnowflakeGenerator) Generate() string {
 	return g.node.Generate().String()
 }
 
+func (g SnowflakeGenerator) Name() string {
+	return "Snowflake - BIGINT"
+}
+
 var _ IDGenerator = (*SnowflakeGenerator)(nil)
 
 func (g SnowflakeGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS snowflake_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS snowflake_table (id VARCHAR(20) PRIMARY KEY)")
 	return err
 }
 

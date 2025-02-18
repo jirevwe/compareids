@@ -118,6 +118,7 @@
                 <option value="10000">10,000 rows</option>
                 <option value="100000">100,000 rows</option>
                 <option value="1000000">1,000,000 rows</option>
+<!--                <option value="10000000">10,000,000 rows</option>-->
             </select>
         </div>
     </div>
@@ -144,8 +145,8 @@
         function formatBytes(bytes) {
             const sizes = ['B', 'KiB', 'MiB', 'GiB'];
             if (bytes === 0) return '0 B';
-            const i = Math.floor(Math.log(bytes) / Math.log(1024));
-            return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+            const i = Math.floor(Math.log(bytes) / Math.log(1000));
+            return `${(bytes / Math.pow(1000, i)).toFixed(2)} ${sizes[i]}`;
         }
 
         function colorize(ratio) {
@@ -193,7 +194,7 @@
         }
 
         // Load data from all_stats.json
-        fetch('all_stats.json')
+        fetch('db_size_stats.json')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to load data');

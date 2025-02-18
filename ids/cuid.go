@@ -17,12 +17,16 @@ func NewCUIDGenerator() CUIDGenerator {
 	return CUIDGenerator{}
 }
 
+func (g CUIDGenerator) Name() string {
+	return "CUID - VARCHAR(25)"
+}
+
 func (g CUIDGenerator) Generate() string {
 	return cuid.New()
 }
 
 func (g CUIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS cuid_table (id TEXT PRIMARY KEY)")
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS cuid_table (id VARCHAR(25) PRIMARY KEY)")
 	return err
 }
 
