@@ -72,7 +72,7 @@ func main() {
 		1_000,
 		10_000,
 		100_000,
-		// 1_000_000,
+		1_000_000,
 		// 10_000_000,
 	}
 
@@ -104,11 +104,13 @@ func main() {
 
 	// Create a map for the template data
 	templateData := struct {
-		Data    map[string][]map[string]interface{}
-		IDTypes []string
+		Data      map[string][]map[string]interface{}
+		IDTypes   []string
+		RowCounts []uint64
 	}{
-		Data:    make(map[string][]map[string]interface{}),
-		IDTypes: make([]string, 0),
+		Data:      make(map[string][]map[string]interface{}, len(tests)),
+		IDTypes:   make([]string, 0, len(tests)),
+		RowCounts: rowCounts,
 	}
 
 	// Process the results for the template
