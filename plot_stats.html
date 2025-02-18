@@ -1,130 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ID Comparison Stats</title>
+    <title>ID Generator Performance Comparison</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #ffffff;
-            color: #24292e;
         }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .controls {
+        .selector-container {
             margin: 20px 0;
-            padding: 10px 1px;
-            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
         }
-
-        .control-group {
-            margin-bottom: 10px;
+        .selector {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #666;
         }
-
-        .control-group label {
-            font-weight: 600;
+        .selector-active {
+            background-color: #007bff;
+            color: white;
+            border-color: #0056b3;
+        }
+        #select-all-systems {
+            font-weight: bold;
             margin-right: 10px;
         }
-
-        select {
-            padding: 5px 10px;
-            border: 1px solid #e1e4e8;
-            border-radius: 4px;
-            background-color: white;
-            font-size: 14px;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-
-        th, td {
-            padding: 8px 12px;
-            text-align: left;
-            border: 1px solid #e1e4e8;
-        }
-
-        th {
-            background-color: #f6f8fa;
-            font-weight: 600;
-        }
-
-        .shadow {
-            background-color: #f6f8fa;
-        }
-
-        .best {
-            font-weight: bold;
-        }
-
-        .size-cell {
-            font-family: monospace;
-        }
-
-        /* Updated color gradients */
-        .ratio-good {
-            background-color: rgb(232, 255, 232);
-            color: black;
-        }
-        .ratio-15-2 {
-            background-color: rgb(255, 220, 220);
-            color: black;
-        }
-        .ratio-2-3 {
-            background-color: rgb(255, 200, 200);
-            color: black;
-        }
-        .ratio-above-3 {
-            background-color: rgb(255, 180, 180);
-            color: black;
-        }
-
         #loading {
             text-align: center;
             padding: 20px;
             font-style: italic;
-            color: #666;
         }
-
         .error {
-            color: #cf222e;
+            color: #dc3545;
             padding: 20px;
             text-align: center;
-            border: 1px solid #ffdce0;
-            background-color: #ffebe9;
-            border-radius: 6px;
+            border: 1px solid #f5c6cb;
+            background-color: #f8d7da;
+            border-radius: 4px;
             margin: 20px 0;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .size-cell {
+            font-family: monospace;
+        }
+        .ratio-good {
+            background-color: rgb(232, 255, 232);
+        }
+        .ratio-15-2 {
+            background-color: rgb(255, 220, 220);
+        }
+        .ratio-2-3 {
+            background-color: rgb(255, 200, 200);
+        }
+        .ratio-above-3 {
+            background-color: rgb(255, 180, 180);
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+        .control-group label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        select {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <h1>ID Types Comparison</h1>
+    <h1>ID Generator Performance Comparison</h1>
     
+    <div id="loading">Loading data...</div>
+    <div id="error" class="error"></div>
+
+    <div class="selector-container" style="display: none;">
+        <table class="selector-table">
+            <tr>
+                <th>ID Types: </th>
+                <td id="selectors_system">
+                    <a id="select-all-systems" class="selector selector-active">All</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+
     <div class="controls">
         <div class="control-group">
             <label for="scale-select">Scale:</label>
-            <select id="scale-select" onchange="updateTable()" disabled>
+            <select id="scale-select">
                 <option value="1000">1,000 rows</option>
                 <option value="10000">10,000 rows</option>
                 <option value="100000">100,000 rows</option>
-                <option value="1000000">1,000,000 rows</option>
-<!--                <option value="10000000">10,000,000 rows</option>-->
             </select>
         </div>
     </div>
-
-    <div id="loading">Loading data...</div>
-    <div id="error" style="display: none;" class="error"></div>
 
     <table id="comparison-table" style="display: none;">
         <thead>
@@ -133,6 +131,7 @@
                 <th>Total Table Size</th>
                 <th>Data Size</th>
                 <th>Index Size</th>
+                <th>Duration (ms)</th>
             </tr>
         </thead>
         <tbody id="table-body">
@@ -140,13 +139,14 @@
     </table>
 
     <script>
+        let idTypes = [];
         let data = null;
-
+        
         function formatBytes(bytes) {
             const sizes = ['B', 'KiB', 'MiB', 'GiB'];
             if (bytes === 0) return '0 B';
-            const i = Math.floor(Math.log(bytes) / Math.log(1000));
-            return `${(bytes / Math.pow(1000, i)).toFixed(2)} ${sizes[i]}`;
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
         }
 
         function colorize(ratio) {
@@ -159,42 +159,90 @@
         function updateTable() {
             const tableBody = document.getElementById('table-body');
             const selectedCount = document.getElementById('scale-select').value;
+            const activeSelectors = document.querySelectorAll('.selector-active[data-name]');
+            const selectedTypes = Array.from(activeSelectors).map(el => el.dataset.name);
             
             // Clear the table
             tableBody.innerHTML = '';
             
-            // Find minimum sizes for the selected count
-            const minTotalSize = Math.min(...Object.values(data).map(stats => 
-                stats.find(s => s.count === selectedCount).total_table_size
-            ));
-            const minDataSize = Math.min(...Object.values(data).map(stats => 
-                stats.find(s => s.count === selectedCount).data_size
-            ));
-            const minIndexSize = Math.min(...Object.values(data).map(stats => 
-                stats.find(s => s.count === selectedCount).index_size
-            ));
+            // Filter data for selected types
+            const filteredData = {};
+            selectedTypes.forEach(type => {
+                if (data.Data[type]) {
+                    filteredData[type] = data.Data[type].find(s => s.count === parseInt(selectedCount));
+                }
+            });
 
-            // Add rows for each ID type
-            Object.entries(data).forEach(([idType, stats]) => {
-                const stat = stats.find(s => s.count === selectedCount);
+            // Find minimum sizes for the selected data
+            const minTotalSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.total_table_size)));
+            const minDataSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.data_size)));
+            const minIndexSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.index_size)));
+            const minDuration = Math.min(...Object.values(filteredData).map(s => s.duration));
+
+            // Add rows for each selected ID type
+            selectedTypes.forEach(idType => {
+                const stats = filteredData[idType];
+                if (!stats) return;
+
                 const row = document.createElement('tr');
                 
-                const totalRatio = stat.total_table_size / minTotalSize;
-                const dataRatio = stat.data_size / minDataSize;
-                const indexRatio = stat.index_size / minIndexSize;
+                const totalRatio = parseInt(stats.total_table_size) / minTotalSize;
+                const dataRatio = parseInt(stats.data_size) / minDataSize;
+                const indexRatio = parseInt(stats.index_size) / minIndexSize;
+                const durationRatio = stats.duration / minDuration;
 
                 row.innerHTML = `
                     <td>${idType}</td>
-                    <td class="size-cell ${colorize(totalRatio)}">${formatBytes(stat.total_table_size)} (×${totalRatio.toFixed(2)})</td>
-                    <td class="size-cell ${colorize(dataRatio)}">${formatBytes(stat.data_size)} (×${dataRatio.toFixed(2)})</td>
-                    <td class="size-cell ${colorize(indexRatio)}">${formatBytes(stat.index_size)} (×${indexRatio.toFixed(2)})</td>
+                    <td class="size-cell ${colorize(totalRatio)}">${formatBytes(parseInt(stats.total_table_size))} (&times;${totalRatio.toFixed(2)})</td>
+                    <td class="size-cell ${colorize(dataRatio)}">${formatBytes(parseInt(stats.data_size))} (&times;${dataRatio.toFixed(2)})</td>
+                    <td class="size-cell ${colorize(indexRatio)}">${formatBytes(parseInt(stats.index_size))} (&times;${indexRatio.toFixed(2)})</td>
+                    <td class="size-cell ${colorize(durationRatio)}">${stats.duration.toFixed(2)} (&times;${durationRatio.toFixed(2)})</td>
                 `;
                 tableBody.appendChild(row);
             });
+
+            document.getElementById('comparison-table').style.display = 'table';
         }
 
-        // Load data from all_stats.json
-        fetch('db_size_stats.json')
+        function initializeSelectors() {
+            const container = document.getElementById('selectors_system');
+            idTypes.forEach(idType => {
+                const selector = document.createElement('a');
+                selector.className = 'selector selector-active';
+                selector.dataset.name = idType;
+                selector.textContent = idType;
+                selector.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    this.classList.toggle('selector-active');
+                    updateTable();
+                });
+                container.appendChild(selector);
+            });
+
+            document.getElementById('select-all-systems').addEventListener('click', function(e) {
+                e.preventDefault();
+                const isDeselecting = document.querySelectorAll('.selector-active[data-name]').length === idTypes.length;
+                
+                document.querySelectorAll('.selector[data-name]').forEach(selector => {
+                    if (isDeselecting) {
+                        selector.classList.remove('selector-active');
+                    } else {
+                        selector.classList.add('selector-active');
+                    }
+                });
+                
+                this.classList.toggle('selector-active', !isDeselecting);
+                updateTable();
+            });
+
+            document.querySelector('.selector-container').style.display = 'block';
+        }
+
+        // Add scale select event listener
+        document.getElementById('scale-select').addEventListener('change', updateTable);
+
+        // Load data from JSON file
+        fetch('template_data.json')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to load data');
@@ -203,15 +251,16 @@
             })
             .then(jsonData => {
                 data = jsonData;
+                idTypes = jsonData.IDTypes;
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('comparison-table').style.display = 'table';
-                document.getElementById('scale-select').disabled = false;
+                initializeSelectors();
                 updateTable();
             })
             .catch(error => {
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').textContent = 'Error loading data: ' + error.message;
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = 'Error loading data: ' + error.message;
+                errorDiv.style.display = 'block';
             });
     </script>
 </body>

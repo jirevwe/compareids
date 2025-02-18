@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"text/template"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -68,7 +68,13 @@ func main() {
 	}
 
 	// Define the row counts to test
-	rowCounts := []uint64{1_000, 10_000, 100_000, 1_000_000}
+	rowCounts := []uint64{
+		1_000,
+		10_000,
+		100_000,
+		// 1_000_000,
+		// 10_000_000,
+	}
 
 	// Collect all stats
 	dbSizeStats := make(map[string][]map[string]string)
@@ -96,6 +102,59 @@ func main() {
 		}
 	}
 
+	// Create a map for the template data
+	templateData := struct {
+		Data    map[string][]map[string]interface{}
+		IDTypes []string
+	}{
+		Data:    make(map[string][]map[string]interface{}),
+		IDTypes: make([]string, 0),
+	}
+
+	// Process the results for the template
+	for _, test := range tests {
+		idType := test.generator.Name()
+		templateData.IDTypes = append(templateData.IDTypes, idType)
+		templateData.Data[idType] = make([]map[string]interface{}, 0)
+
+		// Get all results for this ID type
+		for _, result := range results {
+			if result.IDType == idType {
+				// Get the corresponding size stats
+				var sizeStats map[string]string
+				for _, stats := range dbSizeStats[idType] {
+					if stats["count"] == fmt.Sprintf("%d", result.Count) {
+						sizeStats = stats
+						break
+					}
+				}
+
+				// Combine duration and size stats
+				dataPoint := map[string]interface{}{
+					"count":            result.Count,
+					"duration":         result.Duration,
+					"total_table_size": sizeStats["total_table_size"],
+					"data_size":        sizeStats["data_size"],
+					"index_size":       sizeStats["index_size"],
+				}
+				templateData.Data[idType] = append(templateData.Data[idType], dataPoint)
+			}
+		}
+	}
+
+	// Write template data to JSON file
+	templateDataFile, err := os.Create("template_data.json")
+	if err != nil {
+		log.Fatalf("Unable to create template data JSON file: %v\n", err)
+	}
+	defer templateDataFile.Close()
+
+	encoder := json.NewEncoder(templateDataFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(templateData); err != nil {
+		log.Fatalf("Unable to write template data to JSON file: %v\n", err)
+	}
+
 	// Write all stats to a single JSON file
 	file, err := os.Create("db_size_stats.json")
 	if err != nil {
@@ -103,36 +162,11 @@ func main() {
 	}
 	defer file.Close()
 
-	jsonTemplate := `{
-	{{range $idType, $statsList := .}}
-	"{{$idType}}": [
-		{{range $index, $stats := $statsList}}
-		{
-			"count": "{{index $stats "count"}}",
-			"total_table_size": {{index $stats "total_table_size"}},
-			"data_size": {{index $stats "data_size"}},
-			"index_size": {{index $stats "index_size"}}
-		}{{if not (last $index $statsList)}},{{end}}
-		{{end}}
-	],
-	{{end}}
-}`
-
-	// Define a custom function map with a 'last' function
-	funcMap := template.FuncMap{
-		"last": func(x int, a interface{}) bool {
-			return x == len(a.([]map[string]string))-1
-		},
-	}
-
-	tmpl, err := template.New("json").Funcs(funcMap).Parse(jsonTemplate)
-	if err != nil {
-		log.Fatalf("Unable to parse JSON template: %v\n", err)
-	}
-
-	err = tmpl.Execute(file, dbSizeStats)
-	if err != nil {
-		log.Fatalf("Unable to execute JSON template: %v\n", err)
+	// Write the stats directly as JSON
+	encoder = json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(dbSizeStats); err != nil {
+		log.Fatalf("Unable to write stats to JSON file: %v\n", err)
 	}
 }
 
