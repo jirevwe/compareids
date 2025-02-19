@@ -94,6 +94,43 @@
             border-radius: 4px;
             font-size: 14px;
         }
+        th[title] {
+            cursor: help;
+            border-bottom: 1px dotted #666;
+        }
+        .info-icon {
+            color: #666;
+            cursor: help;
+            position: relative;
+            margin-left: 4px;
+        }
+        
+        .info-icon:hover::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: nowrap;
+            z-index: 1;
+            margin-bottom: 5px;
+        }
+
+        .info-icon:hover::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.8);
+            margin-bottom: -5px;
+        }
     </style>
 </head>
 <body>
@@ -174,14 +211,14 @@
             if (selectedMetric === 'selector-metric-size') {
                 tableHeaders.innerHTML = `
                     <th>ID Type</th>
-                    <th>Total Table Size</th>
-                    <th>Data Size</th>
-                    <th>Index Size</th>
+                    <th>Total Table Size <span class="info-icon" data-tooltip="Total size of the table including data and all indexes">&#9432;</span></th>
+                    <th>Data Size <span class="info-icon" data-tooltip="Size of the table data only, excluding indexes">&#9432;</span></th>
+                    <th>Index Size <span class="info-icon" data-tooltip="Combined size of all indexes on the table">&#9432;</span></th>
                 `;
             } else if (selectedMetric === 'selector-metric-rate') {
                 tableHeaders.innerHTML = `
                     <th>ID Type</th>
-                    <th>Records/Second</th>
+                    <th>Records/ms</th>
                     <th>Duration (ms)</th>
                 `;
             }
@@ -223,7 +260,7 @@
                 // Calculate insertion rates
                 const rates = Object.entries(filteredData).map(([type, stats]) => ({
                     type,
-                    recordsPerSecond: (stats.count / stats.duration) * 1000,
+                    recordsPerSecond: (stats.count / stats.duration),
                     count: stats.count,
                     duration: stats.duration
                 }));
@@ -239,7 +276,7 @@
                     row.innerHTML = `
                         <td>${type}</td>
                         <td class="size-cell ${colorize(1/ratio)}">${Math.round(recordsPerSecond).toLocaleString()} (&times;${ratio.toFixed(2)})</td>
-                        <td class="size-cell">${duration.toFixed(2)}</td>
+                        <td class="size-cell">${Math.round(duration).toLocaleString()}</td>
                     `;
                     tableBody.appendChild(row);
                 });
