@@ -3,28 +3,119 @@
 <head>
     <title>ID Performance Comparison</title>
     <style>
+        :root {
+            /* Dark theme variables */
+            --bg-color-dark: #1a1a1a;
+            --text-color-dark: #e0e0e0;
+            --border-color-dark: #333;
+            --header-bg-dark: #252525;
+            --table-hover-dark: #2a2a2a;
+            --blue-accent-dark: #3b82f6;
+            --good-bg-dark: rgba(74, 222, 128, 0.1);
+            --warning-bg-dark: rgba(251, 146, 60, 0.1);
+            --danger-bg-dark: rgba(248, 113, 113, 0.1);
+            --severe-bg-dark: rgba(239, 68, 68, 0.1);
+
+            /* Light theme variables */
+            --bg-color-light: #ffffff;
+            --text-color-light: #333333;
+            --border-color-light: #e5e7eb;
+            --header-bg-light: #f8f9fa;
+            --table-hover-light: #f5f5f5;
+            --blue-accent-light: #2563eb;
+            --good-bg-light: rgba(74, 222, 128, 0.1);
+            --warning-bg-light: rgba(251, 146, 60, 0.1);
+            --danger-bg-light: rgba(248, 113, 113, 0.1);
+            --severe-bg-light: rgba(239, 68, 68, 0.1);
+
+            /* Default to dark theme */
+            --bg-color: var(--bg-color-dark);
+            --text-color: var(--text-color-dark);
+            --border-color: var(--border-color-dark);
+            --header-bg: var(--header-bg-dark);
+            --table-hover: var(--table-hover-dark);
+            --blue-accent: var(--blue-accent-dark);
+            --good-bg: var(--good-bg-dark);
+            --warning-bg: var(--warning-bg-dark);
+            --danger-bg: var(--danger-bg-dark);
+            --severe-bg: var(--severe-bg-dark);
+        }
+
+        /* Light theme class */
+        :root.light-theme {
+            --bg-color: var(--bg-color-light);
+            --text-color: var(--text-color-light);
+            --border-color: var(--border-color-light);
+            --header-bg: var(--header-bg-light);
+            --table-hover: var(--table-hover-light);
+            --blue-accent: var(--blue-accent-light);
+            --good-bg: var(--good-bg-light);
+            --warning-bg: var(--warning-bg-light);
+            --danger-bg: var(--danger-bg-light);
+            --severe-bg: var(--severe-bg-light);
+        }
+
+        /* Add smooth transition for theme changes */
+        body * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Theme toggle button styles */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--blue-accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            opacity: 0.9;
+        }
+
+        .theme-toggle svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
         .selector-container {
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
         }
         .selector {
             display: inline-block;
             padding: 4px 8px;
             margin: 2px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             cursor: pointer;
             text-decoration: none;
-            color: #666;
+            color: var(--text-color);
         }
         .selector-active {
-            background-color: #007bff;
+            background-color: var(--blue-accent);
             color: white;
-            border-color: #0056b3;
+            border-color: var(--blue-accent);
         }
         #select-all-systems {
             font-weight: bold;
@@ -53,26 +144,27 @@
         th, td {
             padding: 8px;
             text-align: left;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
         }
         th {
-            background-color: #f8f9fa;
+            background-color: var(--header-bg);
             font-weight: bold;
         }
         .size-cell {
             font-family: monospace;
+            color: var(--blue-accent);
         }
         .ratio-good {
-            background-color: rgb(232, 255, 232);
+            background-color: var(--good-bg);
         }
         .ratio-15-2 {
-            background-color: rgb(255, 220, 220);
+            background-color: var(--warning-bg);
         }
         .ratio-2-3 {
-            background-color: rgb(255, 200, 200);
+            background-color: var(--danger-bg);
         }
         .ratio-above-3 {
-            background-color: rgb(255, 180, 180);
+            background-color: var(--severe-bg);
         }
         .controls {
             margin: 20px 0;
@@ -108,13 +200,14 @@
             left: 50%;
             transform: translateX(-50%);
             padding: 5px 10px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
             border-radius: 4px;
             font-size: 14px;
             white-space: nowrap;
             z-index: 1;
             margin-bottom: 5px;
+            border: 1px solid var(--border-color);
         }
 
         .info-icon:hover::after {
@@ -138,13 +231,13 @@
         .comparison th {
             text-align: left;
             padding: 4px 8px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
+            background-color: var(--header-bg);
+            border: 1px solid var(--border-color);
         }
 
         .comparison td {
             padding: 4px 8px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
         }
 
         .summary-name {
@@ -159,7 +252,7 @@
         }
 
         .summary-bar {
-            background-color: #007bff;
+            background-color: var(--blue-accent);
             height: 12px;
             border-radius: 2px;
         }
@@ -190,9 +283,29 @@
         .selector-table td, .selector-table th {
             padding: 4px;
         }
+
+        /* Add hover effect to table rows */
+        tr:hover {
+            background-color: var(--table-hover);
+        }
+
+        /* Add transition for hover effects */
+        tr, td, th {
+            transition: background-color 0.2s ease;
+        }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <svg class="sun-icon" viewBox="0 0 24 24">
+            <path d="M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3zm0-2V4c0-.55-.45-1-1-1s-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1zm0 14v-3c0-.55-.45-1-1-1s-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1zm6.36-12.95l2.12-2.12c.39-.39.39-1.02 0-1.41s-1.02-.39-1.41 0l-2.12 2.12c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0zM4.93 19.07l2.12-2.12c.39-.39.39-1.02 0-1.41s-1.02-.39-1.41 0l-2.12 2.12c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0zM20 11h3c.55 0 1-.45 1-1s-.45-1-1-1h-3c-.55 0-1 .45-1 1s.45 1 1 1zM4 11h3c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1z"/>
+        </svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" style="display: none;">
+            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+        </svg>
+        <span class="theme-text">Switch to Light Mode</span>
+    </button>
+
     <h1>ID Performance Comparison</h1>
     
     <div id="loading">Loading data...</div>
@@ -523,6 +636,53 @@
                 errorDiv.textContent = 'Error loading data: ' + error.message;
                 errorDiv.style.display = 'block';
             });
+
+        // Add this before the existing script code
+        function toggleTheme() {
+            const root = document.documentElement;
+            const themeToggle = document.querySelector('.theme-toggle');
+            const sunIcon = document.querySelector('.sun-icon');
+            const moonIcon = document.querySelector('.moon-icon');
+            const themeText = document.querySelector('.theme-text');
+            
+            if (root.classList.contains('light-theme')) {
+                root.classList.remove('light-theme');
+                themeText.textContent = 'Switch to Light Mode';
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                root.classList.add('light-theme');
+                themeText.textContent = 'Switch to Dark Mode';
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        // Save theme preference
+        function saveThemePreference(isLight) {
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        }
+
+        // Load theme preference
+        function loadThemePreference() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-theme');
+                document.querySelector('.theme-text').textContent = 'Switch to Dark Mode';
+                document.querySelector('.sun-icon').style.display = 'none';
+                document.querySelector('.moon-icon').style.display = 'block';
+            }
+        }
+
+        // Call this when the page loads
+        document.addEventListener('DOMContentLoaded', loadThemePreference);
+
+        // Add this to the toggleTheme function
+        const originalToggleTheme = toggleTheme;
+        toggleTheme = function() {
+            originalToggleTheme();
+            saveThemePreference(document.documentElement.classList.contains('light-theme'));
+        };
     </script>
 </body>
 </html> 
