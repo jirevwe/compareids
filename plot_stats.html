@@ -131,6 +131,47 @@
             border-top-color: rgba(0, 0, 0, 0.8);
             margin-bottom: -5px;
         }
+
+        /* New styles for comparison table */
+        .comparison {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+
+        .comparison th {
+            text-align: left;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+        }
+
+        .comparison td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .summary-name {
+            width: 200px;
+            font-weight: normal;
+        }
+
+        .summary-bar-cell {
+            width: 400px;
+            padding: 8px !important;
+        }
+
+        .summary-bar {
+            background-color: #007bff;
+            height: 20px;
+            border-radius: 2px;
+        }
+
+        .summary-number {
+            width: 100px;
+            text-align: right;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -162,6 +203,19 @@
             </tr>
         </table>
     </div>
+
+    <table id="comparison-view" class="comparison">
+        <thead>
+            <tr>
+                <th class="summary-name">ID Type</th>
+                <th colspan="2">
+                    <span id="comparison-metric-title">Storage Efficiency (higher is better)</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody id="comparison-body">
+        </tbody>
+    </table>
 
     <table id="comparison-table" style="display: none;">
         <thead>
@@ -196,6 +250,8 @@
         }
 
         function updateTable() {
+            const activeMetric = document.querySelector('#selectors_metric .selector-active').id;
+            const comparisonTable = document.getElementById('comparison-table');
             const tableBody = document.getElementById('table-body');
             const activeScaleSelector = document.querySelector('#selectors_scale .selector-active');
             const selectedCount = activeScaleSelector ? activeScaleSelector.dataset.value : "1000";
@@ -215,12 +271,14 @@
                     <th>Data Size <span class="info-icon" data-tooltip="Size of the table data only, excluding indexes">&#9432;</span></th>
                     <th>Index Size <span class="info-icon" data-tooltip="Combined size of all indexes on the table">&#9432;</span></th>
                 `;
+                comparisonTable.style.display = 'table';
             } else if (selectedMetric === 'selector-metric-rate') {
                 tableHeaders.innerHTML = `
                     <th>ID Type</th>
                     <th>Records/ms</th>
                     <th>Duration (ms)</th>
                 `;
+                comparisonTable.style.display = 'table';
             }
             
             // Filter data for selected types
@@ -282,7 +340,68 @@
                 });
             }
 
-            document.getElementById('comparison-table').style.display = 'table';
+            // Always update the comparison view
+            updateComparisonView();
+        }
+
+        function updateComparisonView() {
+            const activeScaleSelector = document.querySelector('#selectors_scale .selector-active');
+            const selectedCount = activeScaleSelector ? activeScaleSelector.dataset.value : "1000";
+            const activeSelectors = document.querySelectorAll('#selectors_system .selector-active[data-name]');
+            const selectedTypes = Array.from(activeSelectors).map(el => el.dataset.name);
+            const selectedMetric = document.querySelector('#selectors_metric .selector-active').id;
+            
+            // Filter data for selected types
+            const filteredData = {};
+            selectedTypes.forEach(type => {
+                if (data.Data[type]) {
+                    filteredData[type] = data.Data[type].find(s => s.count === parseInt(selectedCount));
+                }
+            });
+
+            let scores;
+            if (selectedMetric === 'selector-metric-size') {
+                // Calculate efficiency scores based on total table size (inverse of size ratio)
+                const minTotalSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.total_table_size)));
+                scores = Object.entries(filteredData).map(([type, stats]) => ({
+                    type,
+                    score: (minTotalSize / parseInt(stats.total_table_size)) * 100
+                }));
+                document.getElementById('comparison-metric-title').textContent = 
+                    `Storage Efficiency at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
+            } else {
+                // Calculate efficiency scores based on insertion rate
+                const rates = Object.entries(filteredData).map(([type, stats]) => ({
+                    type,
+                    recordsPerSecond: (stats.count / stats.duration)
+                }));
+                const maxRate = Math.max(...rates.map(r => r.recordsPerSecond));
+                scores = rates.map(({type, recordsPerSecond}) => ({
+                    type,
+                    score: (recordsPerSecond / maxRate) * 100
+                }));
+                document.getElementById('comparison-metric-title').textContent = 
+                    `Insertion Rate Efficiency at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
+            }
+
+            // Sort by score descending
+            scores.sort((a, b) => b.score - a.score);
+
+            // Update comparison view
+            const comparisonBody = document.getElementById('comparison-body');
+            comparisonBody.innerHTML = '';
+
+            scores.forEach(({type, score}) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="summary-name">${type}</td>
+                    <td class="summary-bar-cell">
+                        <div class="summary-bar" style="width: ${score}%;"></div>
+                    </td>
+                    <td class="summary-number">${score.toFixed(2)}%</td>
+                `;
+                comparisonBody.appendChild(row);
+            });
         }
 
         function initializeSelectors() {
