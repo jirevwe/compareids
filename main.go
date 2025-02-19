@@ -49,29 +49,34 @@ func main() {
 
 	// Define the test cases
 	tests := []TestCase{
-		{ids.NewXIDGenerator()},
+		// int
+		{ids.NewBigSerialGenerator()},
+		// uuidv4
+		{ids.NewUUIDv4Generator()},
+		{ids.NewUUIDv4DBGenerator()},
+		// uuidv7
+		{ids.NewUUIDv7Generator()},
+		{ids.NewUUIDv7DBGenerator()},
+		{ids.NewUUIDv7GoogleGenerator()},
+		// ulid
 		{ids.NewULIDGenerator()},
+		{ids.NewULIDDBGenerator()},
+		{ids.NewULIDPGGenerator()},
+		// others
+		{ids.NewXIDGenerator()},
 		{ids.NewCUIDGenerator()},
 		{ids.NewKSUIDGenerator()},
 		{ids.NewNanoIDGenerator()},
-		{ids.NewUUIDv4Generator()},
-		{ids.NewUUIDv7Generator()},
 		{ids.NewTypeIDGenerator()},
 		{ids.NewMongoIDGenerator()},
-		{ids.NewUUIDv4DBGenerator()},
-		{ids.NewUUIDv7DBGenerator()},
 		{ids.NewSnowflakeGenerator()},
-		{ids.NewBigSerialGenerator()},
-		{ids.NewUUIDv7GoogleGenerator()},
-		{ids.NewULIDDBGenerator()},
-		{ids.NewULIDPGGenerator()},
 	}
 
 	// Define the row counts to test
 	rowCounts := []uint64{
-		1_000,
-		10_000,
-		100_000,
+		// 1_000,
+		// 10_000,
+		// 100_000,
 		1_000_000,
 		10_000_000,
 	}
