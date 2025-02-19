@@ -97,7 +97,7 @@
     </style>
 </head>
 <body>
-    <h1>ID Generator Performance Comparison</h1>
+    <h1>ID Performance Comparison</h1>
     
     <div id="loading">Loading data...</div>
     <div id="error" class="error"></div>
@@ -177,7 +177,6 @@
                     <th>Total Table Size</th>
                     <th>Data Size</th>
                     <th>Index Size</th>
-                    <th>Duration (ms)</th>
                 `;
             } else if (selectedMetric === 'selector-metric-rate') {
                 tableHeaders.innerHTML = `
@@ -200,7 +199,6 @@
                 const minTotalSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.total_table_size)));
                 const minDataSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.data_size)));
                 const minIndexSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.index_size)));
-                const minDuration = Math.min(...Object.values(filteredData).map(s => s.duration));
 
                 // Add rows for each selected ID type
                 selectedTypes.forEach(idType => {
@@ -212,14 +210,12 @@
                     const totalRatio = parseInt(stats.total_table_size) / minTotalSize;
                     const dataRatio = parseInt(stats.data_size) / minDataSize;
                     const indexRatio = parseInt(stats.index_size) / minIndexSize;
-                    const durationRatio = stats.duration / minDuration;
 
                     row.innerHTML = `
                         <td>${idType}</td>
                         <td class="size-cell ${colorize(totalRatio)}">${formatBytes(parseInt(stats.total_table_size))} (&times;${totalRatio.toFixed(2)})</td>
                         <td class="size-cell ${colorize(dataRatio)}">${formatBytes(parseInt(stats.data_size))} (&times;${dataRatio.toFixed(2)})</td>
                         <td class="size-cell ${colorize(indexRatio)}">${formatBytes(parseInt(stats.index_size))} (&times;${indexRatio.toFixed(2)})</td>
-                        <td class="size-cell ${colorize(durationRatio)}">${stats.duration.toFixed(2)} (&times;${durationRatio.toFixed(2)})</td>
                     `;
                     tableBody.appendChild(row);
                 });
