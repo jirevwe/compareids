@@ -10,10 +10,6 @@
             padding: 20px;
         }
         .selector-container {
-            margin: 20px 0;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 4px;
         }
         .selector {
             display: inline-block;
@@ -135,35 +131,36 @@
         /* New styles for comparison table */
         .comparison {
             width: 100%;
-            margin: 20px 0;
+            margin: 10px 0;
             border-collapse: collapse;
         }
 
         .comparison th {
             text-align: left;
-            padding: 8px;
+            padding: 4px 8px;
             background-color: #f8f9fa;
             border: 1px solid #ddd;
         }
 
         .comparison td {
-            padding: 8px;
+            padding: 4px 8px;
             border: 1px solid #ddd;
         }
 
         .summary-name {
             width: 200px;
             font-weight: normal;
+            font-size: 13px;
         }
 
         .summary-bar-cell {
             width: 400px;
-            padding: 8px !important;
+            padding: 4px 8px !important;
         }
 
         .summary-bar {
             background-color: #007bff;
-            height: 20px;
+            height: 12px;
             border-radius: 2px;
         }
 
@@ -171,6 +168,27 @@
             width: 100px;
             text-align: right;
             font-family: monospace;
+            font-size: 13px;
+        }
+
+        /* Make the main comparison table more compact */
+        #comparison-table td, #comparison-table th {
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+
+        /* Add some spacing between tables */
+        #comparison-table {
+            margin-top: 15px;
+        }
+
+        /* Make the selector container more compact */
+        .selector-container {
+            margin: 10px 0;
+        }
+
+        .selector-table td, .selector-table th {
+            padding: 4px;
         }
     </style>
 </head>
