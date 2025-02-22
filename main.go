@@ -78,7 +78,7 @@ func main() {
 		// 10_000,
 		// 100_000,
 		1_000_000,
-		10_000_000,
+		// 10_000_000,
 	}
 
 	// Collect all stats
@@ -138,11 +138,16 @@ func main() {
 
 				// Combine duration and size stats
 				dataPoint := map[string]interface{}{
-					"count":            result.Count,
-					"duration":         result.Duration,
-					"total_table_size": sizeStats["total_table_size"],
-					"data_size":        sizeStats["data_size"],
-					"index_size":       sizeStats["index_size"],
+					"count":                        result.Count,
+					"duration":                     result.Duration,
+					"total_table_size":             sizeStats["total_table_size"],
+					"data_size":                    sizeStats["data_size"],
+					"index_size":                   sizeStats["index_size"],
+					"index_internal_pages":         sizeStats["index_internal_pages"],
+					"index_leaf_pages":             sizeStats["index_leaf_pages"],
+					"index_density":                sizeStats["index_density"],
+					"index_fragmentation":          sizeStats["index_fragmentation"],
+					"index_internal_to_leaf_ratio": sizeStats["index_internal_to_leaf_ratio"],
 				}
 				templateData.Data[idType] = append(templateData.Data[idType], dataPoint)
 			}
@@ -208,6 +213,18 @@ func runTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64, idType string,
 	for k, v := range stats {
 		if str, ok := v.(string); ok {
 			convertedStats[k] = str
+		}
+
+		if str, ok := v.(int); ok {
+			convertedStats[k] = fmt.Sprintf("%d", str)
+		}
+
+		if str, ok := v.(int64); ok {
+			convertedStats[k] = fmt.Sprintf("%d", str)
+		}
+
+		if str, ok := v.(float64); ok {
+			convertedStats[k] = fmt.Sprintf("%f", str)
 		}
 	}
 

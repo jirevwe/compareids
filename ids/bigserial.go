@@ -2,6 +2,7 @@ package ids
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -49,13 +50,37 @@ func (g BigSerialGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.
 
 func (g BigSerialGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
-	var totalTableSize, dataSize, indexSize string
-	err := pool.QueryRow(ctx, statsQuery, "bigserial_table").Scan(&totalTableSize, &dataSize, &indexSize)
+
+	err := LoadPGStatTuple(ctx, pool)
 	if err != nil {
 		return nil, err
 	}
-	stats["total_table_size"] = totalTableSize
-	stats["data_size"] = dataSize
-	stats["index_size"] = indexSize
+
+	var tableStats TableStats
+
+	err = pool.QueryRow(ctx, fmt.Sprintf(fmtStatsQuery, "bigserial_table", "bigserial_table", "bigserial_table")).Scan(
+		&tableStats.TotalTableSize,
+		&tableStats.DataSize,
+		&tableStats.IndexSize,
+		&tableStats.InternalPages,
+		&tableStats.LeafPages,
+		&tableStats.Density,
+		&tableStats.Fragmentation,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	stats["total_table_size"] = tableStats.TotalTableSize
+	stats["data_size"] = tableStats.DataSize
+	stats["index_size"] = tableStats.IndexSize
+	stats["index_internal_pages"] = tableStats.InternalPages
+	stats["index_leaf_pages"] = tableStats.LeafPages
+	stats["index_density"] = tableStats.Density
+	stats["index_fragmentation"] = tableStats.Fragmentation
+
+	// Calculate the ratio of internal pages to leaf pages
+	stats["index_internal_to_leaf_ratio"] = float64(tableStats.InternalPages) / float64(tableStats.LeafPages)
+
 	return stats, nil
 }
