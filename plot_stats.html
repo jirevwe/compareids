@@ -324,6 +324,7 @@
                 <td id="selectors_metric">
                     <a class="selector selector-active" id="selector-metric-size">Storage Size</a>
                     <a class="selector" id="selector-metric-rate">Insertion Rate</a>
+                    <a class="selector" id="selector-metric-fragmentation">Index Fragmentation</a>
                 </td>
             </tr>
             <tr>
@@ -410,6 +411,14 @@
                     <th>Duration (ms)</th>
                 `;
                 comparisonTable.style.display = 'table';
+            } else if (selectedMetric === 'selector-metric-fragmentation') {
+                tableHeaders.innerHTML = `
+                    <th>ID Type</th>
+                    <th>Fragmentation % <span class="info-icon" data-tooltip="Percentage of fragmented space in the index">&#9432;</span></th>
+                    <th>Density % <span class="info-icon" data-tooltip="Average leaf density of the index">&#9432;</span></th>
+                    <th>Internal/Leaf Ratio <span class="info-icon" data-tooltip="Ratio of internal pages to leaf pages. Lower is better.">&#9432;</span></th>
+                `;
+                comparisonTable.style.display = 'table';
             }
             
             // Filter data for selected types
@@ -469,6 +478,54 @@
                     `;
                     tableBody.appendChild(row);
                 });
+            } else if (selectedMetric === 'selector-metric-fragmentation') {
+                // Calculate fragmentation scores (lower is better)
+                const scores = Object.entries(filteredData).map(([type, stats]) => {
+                    const fragmentation = parseFloat(stats.index_fragmentation);
+                    const density = parseFloat(stats.index_density);
+                    // Composite score that considers both fragmentation and density
+                    const score = (100 - fragmentation) * (density / 100);
+                    return { type, score };
+                });
+
+                // Sort by score descending (higher score = better)
+                scores.sort((a, b) => b.score - a.score);
+
+                // Add rows for each selected ID type
+                scores.forEach(({type}) => {
+                    const stats = filteredData[type];
+                    const row = document.createElement('tr');
+                    const fragmentation = parseFloat(stats.index_fragmentation);
+                    const density = parseFloat(stats.index_density);
+                    const ratio = parseFloat(stats.index_internal_to_leaf_ratio);
+                    
+                    // Color coding based on fragmentation
+                    const fragClass = fragmentation <= 10 ? 'ratio-good' : 
+                                    fragmentation <= 30 ? 'ratio-15-2' :
+                                    fragmentation <= 50 ? 'ratio-2-3' : 'ratio-above-3';
+                    
+                    // Color coding based on density
+                    const densityClass = density >= 90 ? 'ratio-good' :
+                                       density >= 70 ? 'ratio-15-2' :
+                                       density >= 50 ? 'ratio-2-3' : 'ratio-above-3';
+                    
+                    // Color coding based on internal/leaf ratio
+                    const ratioClass = ratio <= 0.005 ? 'ratio-good' :
+                                     ratio <= 0.01 ? 'ratio-15-2' :
+                                     ratio <= 0.02 ? 'ratio-2-3' : 'ratio-above-3';
+                    
+                    row.innerHTML = `
+                        <td>${type}</td>
+                        <td class="size-cell ${fragClass}">${fragmentation.toFixed(2)}%</td>
+                        <td class="size-cell ${densityClass}">${density.toFixed(2)}%</td>
+                        <td class="size-cell ${ratioClass}">${ratio.toFixed(4)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Update comparison view title
+                document.getElementById('comparison-metric-title').textContent = 
+                    `Index Health Score at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
             }
 
             // Always update the comparison view
@@ -500,7 +557,7 @@
                 }));
                 document.getElementById('comparison-metric-title').textContent = 
                     `Storage Efficiency at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
-            } else {
+            } else if (selectedMetric === 'selector-metric-rate') {
                 // Calculate efficiency scores based on insertion rate
                 const rates = Object.entries(filteredData).map(([type, stats]) => ({
                     type,
@@ -513,6 +570,17 @@
                 }));
                 document.getElementById('comparison-metric-title').textContent = 
                     `Insertion Rate Efficiency at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
+            } else if (selectedMetric === 'selector-metric-fragmentation') {
+                // Calculate fragmentation scores (lower is better)
+                scores = Object.entries(filteredData).map(([type, stats]) => {
+                    const fragmentation = parseFloat(stats.index_fragmentation);
+                    const density = parseFloat(stats.index_density);
+                    // Composite score that considers both fragmentation and density
+                    const score = (100 - fragmentation) * (density / 100);
+                    return { type, score };
+                });
+                document.getElementById('comparison-metric-title').textContent = 
+                    `Index Health Score at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
             }
 
             // Sort by score descending
