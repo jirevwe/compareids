@@ -14,39 +14,38 @@ type XIDGenerator struct{}
 
 var _ IDGenerator = (*XIDGenerator)(nil)
 
-func NewXIDGenerator() XIDGenerator {
-	return XIDGenerator{}
+func NewXIDGenerator() *XIDGenerator {
+	return &XIDGenerator{}
 }
 
-func (g XIDGenerator) Generate() string {
+func (x *XIDGenerator) Generate() string {
 	return xid.New().String()
 }
 
-func (g XIDGenerator) Name() string {
+func (x *XIDGenerator) Name() string {
 	return "XID - VARCHAR(20)"
 }
 
-func (g XIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS xid_table (id VARCHAR(20) PRIMARY KEY)")
+func (x *XIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS xid_table (id VARCHAR(20) PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g XIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (x *XIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS xid_table")
 	return err
 }
 
-func (g XIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (x *XIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO xid_table (id) VALUES ($1)", id)
+	for i := uint64(1); i <= count; i++ {
+		batch.Queue("INSERT INTO xid_table (id, n) VALUES ($1, $2)", x.Generate(), i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g XIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (x *XIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)
@@ -83,7 +82,7 @@ func (g XIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map
 	return stats, nil
 }
 
-func (g XIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO xid_table (id) VALUES ($1)", g.Generate())
+func (x *XIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO xid_table (id, n) VALUES ($1, $2)", x.Generate(), 1)
 	return err
 }

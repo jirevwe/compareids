@@ -14,48 +14,48 @@ type UUIDv7GoogleGenerator struct{}
 
 var _ IDGenerator = (*UUIDv7GoogleGenerator)(nil)
 
-func NewUUIDv7GoogleGenerator() UUIDv7GoogleGenerator {
-	return UUIDv7GoogleGenerator{}
+func NewUUIDv7GoogleGenerator() *UUIDv7GoogleGenerator {
+	return &UUIDv7GoogleGenerator{}
 }
 
-func (g UUIDv7GoogleGenerator) Generate() string {
-	id, err := uuid.NewUUID()
+func (u *UUIDv7GoogleGenerator) Generate() string {
+	id, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
 	}
 	return id.String()
 }
 
-func (g UUIDv7GoogleGenerator) Name() string {
+func (u *UUIDv7GoogleGenerator) Name() string {
 	return "UUIDv7 (Google) - UUID"
 }
 
-func (g UUIDv7GoogleGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv7_google_table (id UUID PRIMARY KEY)")
+func (u *UUIDv7GoogleGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv7_google_table (id UUID PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g UUIDv7GoogleGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (u *UUIDv7GoogleGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS uuidv7_google_table")
 	return err
 }
 
-func (g UUIDv7GoogleGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO uuidv7_google_table (id) VALUES ($1)", g.Generate())
+func (u *UUIDv7GoogleGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO uuidv7_google_table (id, n) VALUES ($1, $2)", u.Generate(), 1)
 	return err
 }
 
-func (g UUIDv7GoogleGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (u *UUIDv7GoogleGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO uuidv7_google_table (id) VALUES ($1)", id)
+	for i := uint64(1); i <= count; i++ {
+		id := u.Generate()
+		batch.Queue("INSERT INTO uuidv7_google_table (id, n) VALUES ($1, $2)", id, i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g UUIDv7GoogleGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (u *UUIDv7GoogleGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)

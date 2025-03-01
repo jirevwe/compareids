@@ -14,31 +14,31 @@ type MongoIDGenerator struct{}
 
 var _ IDGenerator = (*MongoIDGenerator)(nil)
 
-func NewMongoIDGenerator() MongoIDGenerator {
-	return MongoIDGenerator{}
+func NewMongoIDGenerator() *MongoIDGenerator {
+	return &MongoIDGenerator{}
 }
 
-func (g MongoIDGenerator) Generate() string {
+func (m *MongoIDGenerator) Generate() string {
 	return primitive.NewObjectID().Hex()
 }
 
-func (g MongoIDGenerator) Name() string {
+func (m *MongoIDGenerator) Name() string {
 	return "MongoDB ObjectID - VARCHAR(24)"
 }
 
-func (g MongoIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS mongoid_table (id VARCHAR(24) PRIMARY KEY)")
+func (m *MongoIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS mongoid_table (id VARCHAR(24) PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g MongoIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (m *MongoIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS mongoid_table")
 	return err
 }
 
-func (g MongoIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
+func (m *MongoIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
 	for i := int64(0); i < count; i++ {
-		id := g.Generate()
+		id := m.Generate()
 		_, err := pool.Exec(context.Background(), "INSERT INTO mongoid_table (id) VALUES ($1)", id)
 		if err != nil {
 			return err
@@ -47,17 +47,17 @@ func (g MongoIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
 	return nil
 }
 
-func (g MongoIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (m *MongoIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO mongoid_table (id) VALUES ($1)", id)
+	for i := uint64(1); i <= count; i++ {
+		id := m.Generate()
+		batch.Queue("INSERT INTO mongoid_table (id, n) VALUES ($1, $2)", id, i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g MongoIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (m *MongoIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)
@@ -94,7 +94,7 @@ func (g MongoIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) 
 	return stats, nil
 }
 
-func (g MongoIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO mongoid_table (id) VALUES ($1)", g.Generate())
+func (m *MongoIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO mongoid_table (id, n) VALUES ($1, $2)", m.Generate(), 1)
 	return err
 }

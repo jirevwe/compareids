@@ -14,11 +14,11 @@ type UUIDv7Generator struct{}
 
 var _ IDGenerator = (*UUIDv7Generator)(nil)
 
-func NewUUIDv7Generator() UUIDv7Generator {
-	return UUIDv7Generator{}
+func NewUUIDv7Generator() *UUIDv7Generator {
+	return &UUIDv7Generator{}
 }
 
-func (g UUIDv7Generator) Generate() string {
+func (u *UUIDv7Generator) Generate() string {
 	id, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
@@ -26,36 +26,36 @@ func (g UUIDv7Generator) Generate() string {
 	return id.String()
 }
 
-func (g UUIDv7Generator) Name() string {
+func (u *UUIDv7Generator) Name() string {
 	return "UUIDv7 - UUID"
 }
 
-func (g UUIDv7Generator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv7_table (id UUID PRIMARY KEY)")
+func (u *UUIDv7Generator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv7_table (id UUID PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g UUIDv7Generator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (u *UUIDv7Generator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS uuidv7_table")
 	return err
 }
 
-func (g UUIDv7Generator) InsertRecords(pool *pgxpool.Pool, count int64) error {
+func (u *UUIDv7Generator) InsertRecords(pool *pgxpool.Pool, count int64) error {
 	// Method removed as it is not part of the IDGenerator interface
 	return nil
 }
 
-func (g UUIDv7Generator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (u *UUIDv7Generator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO uuidv7_table (id) VALUES ($1)", id)
+	for i := uint64(1); i <= count; i++ {
+		id := u.Generate()
+		batch.Queue("INSERT INTO uuidv7_table (id, n) VALUES ($1, $2)", id, i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g UUIDv7Generator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (u *UUIDv7Generator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)
@@ -92,7 +92,7 @@ func (g UUIDv7Generator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (
 	return stats, nil
 }
 
-func (g UUIDv7Generator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO uuidv7_table (id) VALUES ($1)", g.Generate())
+func (u *UUIDv7Generator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO uuidv7_table (id, n) VALUES ($1, $2)", u.Generate(), 1)
 	return err
 }

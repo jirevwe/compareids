@@ -14,39 +14,38 @@ type CUIDGenerator struct{}
 
 var _ IDGenerator = (*CUIDGenerator)(nil)
 
-func NewCUIDGenerator() CUIDGenerator {
-	return CUIDGenerator{}
+func NewCUIDGenerator() *CUIDGenerator {
+	return &CUIDGenerator{}
 }
 
-func (g CUIDGenerator) Name() string {
+func (c *CUIDGenerator) Name() string {
 	return "CUID - VARCHAR(25)"
 }
 
-func (g CUIDGenerator) Generate() string {
+func (c *CUIDGenerator) Generate() string {
 	return cuid.New()
 }
 
-func (g CUIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS cuid_table (id VARCHAR(25) PRIMARY KEY)")
+func (c *CUIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS cuid_table (id VARCHAR(25) PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g CUIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (c *CUIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS cuid_table")
 	return err
 }
 
-func (g CUIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (c *CUIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO cuid_table (id) VALUES ($1)", id)
+	for i := uint64(1); i <= count; i++ {
+		batch.Queue("INSERT INTO cuid_table (id, n) VALUES ($1, $2)", c.Generate(), i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g CUIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (c *CUIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)
@@ -83,7 +82,7 @@ func (g CUIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (ma
 	return stats, nil
 }
 
-func (g CUIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO cuid_table (id) VALUES ($1)", g.Generate())
+func (c *CUIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO cuid_table (id, n) VALUES ($1, $2)", c.Generate(), 1)
 	return err
 }

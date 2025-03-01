@@ -37,10 +37,7 @@ func (g BigSerialGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) e
 
 func (g BigSerialGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "INSERT INTO bigserial_table DEFAULT VALUES")
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (g BigSerialGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {

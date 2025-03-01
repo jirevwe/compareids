@@ -34,6 +34,14 @@ type TestCase struct {
 }
 
 func main() {
+	// todo:
+	//  restructure main such
+	//  that it should be used to generate test data for each ID one by one rather than at the same time.
+	//	 For example, we can run: go run /cmd id uuidv4,
+	//	 this generates the results for the uuidv4 test in it's own JSON file.
+	//	 Then we can run another command (go run /cmd merge)
+	//	 which combines all the result JSON files into the template_data.json file like we have today.
+
 	// Create a connection pool
 	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", user, password, host, port, dbname)
 	config, err := pgxpool.ParseConfig(connString)
@@ -49,8 +57,9 @@ func main() {
 
 	// Define the test cases
 	tests := []TestCase{
-		// int
+		// bigint
 		{ids.NewBigSerialGenerator()},
+		{ids.NewSnowflakeGenerator()},
 		// uuidv4
 		{ids.NewUUIDv4Generator()},
 		{ids.NewUUIDv4DBGenerator()},
@@ -69,16 +78,15 @@ func main() {
 		{ids.NewNanoIDGenerator()},
 		{ids.NewTypeIDGenerator()},
 		{ids.NewMongoIDGenerator()},
-		{ids.NewSnowflakeGenerator()},
 	}
 
 	// Define the row counts to test
 	rowCounts := []uint64{
-		// 1_000,
-		// 10_000,
+		1_000,
+		10_000,
 		100_000,
 		1_000_000,
-		2_000_000,
+		// 2_000_000,
 	}
 
 	// Collect all stats
@@ -102,7 +110,7 @@ func main() {
 		}
 
 		// Drop the table after all row counts have been tested for this generator
-		if err := test.generator.DropTable(context.Background(), pool); err != nil {
+		if err = test.generator.DropTable(context.Background(), pool); err != nil {
 			log.Printf("Error dropping table for %s: %v\n", test.generator.Name(), err)
 		}
 	}

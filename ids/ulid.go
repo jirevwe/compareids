@@ -14,39 +14,38 @@ type ULIDGenerator struct{}
 
 var _ IDGenerator = (*ULIDGenerator)(nil)
 
-func NewULIDGenerator() ULIDGenerator {
-	return ULIDGenerator{}
+func NewULIDGenerator() *ULIDGenerator {
+	return &ULIDGenerator{}
 }
 
-func (g ULIDGenerator) Generate() string {
+func (u *ULIDGenerator) Generate() string {
 	return ulid.Make().String()
 }
 
-func (g ULIDGenerator) Name() string {
+func (u *ULIDGenerator) Name() string {
 	return "ULID - VARCHAR(26)"
 }
 
-func (g ULIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ulid_table (id VARCHAR(26) PRIMARY KEY)")
+func (u *ULIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ulid_table (id TEXT PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g ULIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (u *ULIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS ulid_table")
 	return err
 }
 
-func (g ULIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (u *ULIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO ulid_table (id) VALUES ($1)", id)
+	for i := uint64(1); i <= count; i++ {
+		batch.Queue("INSERT INTO ulid_table (id, n) VALUES ($1, $2)", u.Generate(), i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g ULIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (u *ULIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)
@@ -83,7 +82,7 @@ func (g ULIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (ma
 	return stats, nil
 }
 
-func (g ULIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO ulid_table (id) VALUES ($1)", g.Generate())
+func (u *ULIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO ulid_table (id, n) VALUES ($1, $2)", u.Generate(), 1)
 	return err
 }

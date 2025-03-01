@@ -14,50 +14,38 @@ type UUIDv4Generator struct{}
 
 var _ IDGenerator = (*UUIDv4Generator)(nil)
 
-func NewUUIDv4Generator() UUIDv4Generator {
-	return UUIDv4Generator{}
+func NewUUIDv4Generator() *UUIDv4Generator {
+	return &UUIDv4Generator{}
 }
 
-func (g UUIDv4Generator) Generate() string {
-	return uuid.New().String()
+func (u *UUIDv4Generator) Generate() string {
+	return uuid.NewString()
 }
 
-func (g UUIDv4Generator) Name() string {
+func (u *UUIDv4Generator) Name() string {
 	return "UUIDv4 - UUID"
 }
 
-func (g UUIDv4Generator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv4_table (id UUID PRIMARY KEY)")
+func (u *UUIDv4Generator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS uuidv4_table (id UUID PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g UUIDv4Generator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (u *UUIDv4Generator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS uuidv4_table")
 	return err
 }
 
-func (g UUIDv4Generator) InsertRecords(pool *pgxpool.Pool, count int64) error {
-	for i := int64(0); i < count; i++ {
-		id := g.Generate()
-		_, err := pool.Exec(context.Background(), "INSERT INTO uuidv4_table (id) VALUES ($1)", id)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (g UUIDv4Generator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (u *UUIDv4Generator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		id := g.Generate()
-		batch.Queue("INSERT INTO uuidv4_table (id) VALUES ($1)", id)
+	for i := uint64(1); i <= count; i++ {
+		batch.Queue("INSERT INTO uuidv4_table (id, n) VALUES ($1, $2)", u.Generate(), i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g UUIDv4Generator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (u *UUIDv4Generator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)
@@ -94,7 +82,7 @@ func (g UUIDv4Generator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (
 	return stats, nil
 }
 
-func (g UUIDv4Generator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO uuidv4_table (id) VALUES ($1)", g.Generate())
+func (u *UUIDv4Generator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO uuidv4_table (id, n) VALUES ($1, $2)", u.Generate(), 1)
 	return err
 }

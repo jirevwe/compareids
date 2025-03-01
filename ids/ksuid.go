@@ -14,46 +14,44 @@ type KSUIDGenerator struct{}
 
 var _ IDGenerator = (*KSUIDGenerator)(nil)
 
-func NewKSUIDGenerator() KSUIDGenerator {
-	return KSUIDGenerator{}
+func NewKSUIDGenerator() *KSUIDGenerator {
+	return &KSUIDGenerator{}
 }
 
-func (g KSUIDGenerator) Generate() string {
+func (k *KSUIDGenerator) Generate() string {
 	return ksuid.New().String()
 }
 
-func (g KSUIDGenerator) Name() string {
+func (k *KSUIDGenerator) Name() string {
 	return "KSUID - VARCHAR(27)"
 }
 
-func (g KSUIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ksuid_table (id VARCHAR(27) PRIMARY KEY)")
+func (k *KSUIDGenerator) CreateTable(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "CREATE TABLE IF NOT EXISTS ksuid_table (id VARCHAR(27) PRIMARY KEY, n BIGINT NOT NULL)")
 	return err
 }
 
-func (g KSUIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
+func (k *KSUIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) error {
 	_, err := pool.Exec(ctx, "DROP TABLE IF EXISTS ksuid_table")
 	return err
 }
 
-func (g KSUIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, "INSERT INTO ksuid_table (id) VALUES ($1)", g.Generate())
-	if err != nil {
-		return err
-	}
-	return nil
+func (k *KSUIDGenerator) InsertRecord(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, "INSERT INTO ksuid_table (id, n) VALUES ($1, $2)", k.Generate(), 1)
+	return err
 }
 
-func (g KSUIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
+func (k *KSUIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
-	for i := uint64(0); i < count; i++ {
-		batch.Queue("INSERT INTO ksuid_table (id) VALUES ($1)", g.Generate())
+	for i := uint64(1); i <= count; i++ {
+		id := k.Generate()
+		batch.Queue("INSERT INTO ksuid_table (id, n) VALUES ($1, $2)", id, i)
 	}
 	br := pool.SendBatch(ctx, batch)
 	return br.Close()
 }
 
-func (g KSUIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
+func (k *KSUIDGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
 
 	err := LoadPGStatTuple(ctx, pool)
