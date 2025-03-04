@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>ID Performance Comparison</title>
     <style>
@@ -96,12 +97,14 @@
             background-color: var(--bg-color);
             color: var(--text-color);
         }
+
         .selector-container {
             margin: 10px 0;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 10px;
         }
+
         .selector {
             display: inline-block;
             padding: 4px 8px;
@@ -112,20 +115,24 @@
             text-decoration: none;
             color: var(--text-color);
         }
+
         .selector-active {
             background-color: var(--blue-accent);
             color: white;
             border-color: var(--blue-accent);
         }
+
         #select-all-systems {
             font-weight: bold;
             margin-right: 10px;
         }
+
         #loading {
             text-align: center;
             padding: 20px;
             font-style: italic;
         }
+
         .error {
             color: #dc3545;
             padding: 20px;
@@ -136,63 +143,78 @@
             margin: 20px 0;
             display: none;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }
-        th, td {
+
+        th,
+        td {
             padding: 8px;
             text-align: left;
             border: 1px solid var(--border-color);
         }
+
         th {
             background-color: var(--header-bg);
             font-weight: bold;
         }
+
         .size-cell {
             font-family: monospace;
             color: var(--blue-accent);
         }
+
         .ratio-good {
             background-color: var(--good-bg);
         }
+
         .ratio-15-2 {
             background-color: var(--warning-bg);
         }
+
         .ratio-2-3 {
             background-color: var(--danger-bg);
         }
+
         .ratio-above-3 {
             background-color: var(--severe-bg);
         }
+
         .controls {
             margin: 20px 0;
         }
+
         .control-group {
             margin-bottom: 10px;
         }
+
         .control-group label {
             font-weight: bold;
             margin-right: 10px;
         }
+
         select {
             padding: 5px 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
         }
+
         th[title] {
             cursor: help;
             border-bottom: 1px dotted #666;
         }
+
         .info-icon {
             color: #666;
             cursor: help;
             position: relative;
             margin-left: 4px;
         }
-        
+
         .info-icon:hover::before {
             content: attr(data-tooltip);
             position: absolute;
@@ -265,7 +287,8 @@
         }
 
         /* Make the main comparison table more compact */
-        #comparison-table td, #comparison-table th {
+        #comparison-table td,
+        #comparison-table th {
             padding: 4px 8px;
             font-size: 13px;
         }
@@ -280,7 +303,8 @@
             margin: 10px 0;
         }
 
-        .selector-table td, .selector-table th {
+        .selector-table td,
+        .selector-table th {
             padding: 4px;
         }
 
@@ -290,24 +314,29 @@
         }
 
         /* Add transition for hover effects */
-        tr, td, th {
+        tr,
+        td,
+        th {
             transition: background-color 0.2s ease;
         }
     </style>
 </head>
+
 <body>
     <button class="theme-toggle" onclick="toggleTheme()">
         <svg class="sun-icon" viewBox="0 0 24 24">
-            <path d="M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3zm0-2V4c0-.55-.45-1-1-1s-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1zm0 14v-3c0-.55-.45-1-1-1s-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1zm6.36-12.95l2.12-2.12c.39-.39.39-1.02 0-1.41s-1.02-.39-1.41 0l-2.12 2.12c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0zM4.93 19.07l2.12-2.12c.39-.39.39-1.02 0-1.41s-1.02-.39-1.41 0l-2.12 2.12c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0zM20 11h3c.55 0 1-.45 1-1s-.45-1-1-1h-3c-.55 0-1 .45-1 1s.45 1 1 1zM4 11h3c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1z"/>
+            <path
+                d="M12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3zm0-2V4c0-.55-.45-1-1-1s-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1zm0 14v-3c0-.55-.45-1-1-1s-1 .45-1 1v3c0 .55.45 1 1 1s1-.45 1-1zm6.36-12.95l2.12-2.12c.39-.39.39-1.02 0-1.41s-1.02-.39-1.41 0l-2.12 2.12c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0zM4.93 19.07l2.12-2.12c.39-.39.39-1.02 0-1.41s-1.02-.39-1.41 0l-2.12 2.12c-.39.39-.39 1.02 0 1.41s1.02.39 1.41 0zM20 11h3c.55 0 1-.45 1-1s-.45-1-1-1h-3c-.55 0-1 .45-1 1s.45 1 1 1zM4 11h3c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1s.45 1 1 1z" />
         </svg>
         <svg class="moon-icon" viewBox="0 0 24 24" style="display: none;">
-            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+            <path
+                d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z" />
         </svg>
         <span class="theme-text">Switch to Light Mode</span>
     </button>
 
     <h1>ID Performance Comparison</h1>
-    
+
     <div id="loading">Loading data...</div>
     <div id="error" class="error"></div>
 
@@ -325,6 +354,7 @@
                     <a class="selector selector-active" id="selector-metric-size">Storage Size</a>
                     <a class="selector" id="selector-metric-rate">Insertion Rate</a>
                     <a class="selector" id="selector-metric-fragmentation">Index Fragmentation</a>
+                    <a class="selector" id="selector-metric-system">System Resources</a>
                 </td>
             </tr>
             <tr>
@@ -366,7 +396,7 @@
     <script>
         let idTypes = [];
         let data = null;
-        
+
         function formatBytes(bytes) {
             const sizes = ['B', 'KiB', 'MiB', 'GiB'];
             if (bytes === 0) return '0 B';
@@ -390,10 +420,10 @@
             const activeSelectors = document.querySelectorAll('#selectors_system .selector-active[data-name]');
             const selectedTypes = Array.from(activeSelectors).map(el => el.dataset.name);
             const selectedMetric = document.querySelector('#selectors_metric .selector-active').id;
-            
+
             // Clear the table
             tableBody.innerHTML = '';
-            
+
             // Update table headers based on metric
             const tableHeaders = document.querySelector('#comparison-table thead tr');
             if (selectedMetric === 'selector-metric-size') {
@@ -419,8 +449,16 @@
                     <th>Internal/Leaf Ratio <span class="info-icon" data-tooltip="Ratio of internal pages to leaf pages. Lower is better.">&#9432;</span></th>
                 `;
                 comparisonTable.style.display = 'table';
+            } else if (selectedMetric === 'selector-metric-system') {
+                tableHeaders.innerHTML = `
+                    <th>ID Type</th>
+                    <th>CPU Usage % <span class="info-icon" data-tooltip="Average CPU usage percentage during test">&#9432;</span></th>
+                    <th>RAM Usage MB <span class="info-icon" data-tooltip="Average RAM usage in MB during test">&#9432;</span></th>
+                    <th>RAM Usage % <span class="info-icon" data-tooltip="Average RAM usage percentage during test">&#9432;</span></th>
+                `;
+                comparisonTable.style.display = 'table';
             }
-            
+
             // Filter data for selected types
             const filteredData = {};
             selectedTypes.forEach(type => {
@@ -441,7 +479,7 @@
                     if (!stats) return;
 
                     const row = document.createElement('tr');
-                    
+
                     const totalRatio = parseInt(stats.total_table_size) / minTotalSize;
                     const dataRatio = parseInt(stats.data_size) / minDataSize;
                     const indexRatio = parseInt(stats.index_size) / minIndexSize;
@@ -467,13 +505,13 @@
                 const maxRate = Math.max(...rates.map(r => r.recordsPerSecond));
 
                 // Add rows for each selected ID type
-                rates.forEach(({type, recordsPerSecond, count, duration}) => {
+                rates.forEach(({ type, recordsPerSecond, count, duration }) => {
                     const row = document.createElement('tr');
                     const ratio = recordsPerSecond / maxRate;
-                    
+
                     row.innerHTML = `
                         <td>${type}</td>
-                        <td class="size-cell ${colorize(1/ratio)}">${Math.round(recordsPerSecond).toLocaleString()} (&times;${ratio.toFixed(2)})</td>
+                        <td class="size-cell ${colorize(1 / ratio)}">${Math.round(recordsPerSecond).toLocaleString()} (&times;${ratio.toFixed(2)})</td>
                         <td class="size-cell">${Math.round(duration).toLocaleString()}</td>
                     `;
                     tableBody.appendChild(row);
@@ -492,28 +530,28 @@
                 scores.sort((a, b) => b.score - a.score);
 
                 // Add rows for each selected ID type
-                scores.forEach(({type}) => {
+                scores.forEach(({ type }) => {
                     const stats = filteredData[type];
                     const row = document.createElement('tr');
                     const fragmentation = parseFloat(stats.index_fragmentation);
                     const density = parseFloat(stats.index_density);
                     const ratio = parseFloat(stats.index_internal_to_leaf_ratio);
-                    
+
                     // Color coding based on fragmentation
-                    const fragClass = fragmentation <= 10 ? 'ratio-good' : 
-                                    fragmentation <= 30 ? 'ratio-15-2' :
-                                    fragmentation <= 50 ? 'ratio-2-3' : 'ratio-above-3';
-                    
+                    const fragClass = fragmentation <= 10 ? 'ratio-good' :
+                        fragmentation <= 30 ? 'ratio-15-2' :
+                            fragmentation <= 50 ? 'ratio-2-3' : 'ratio-above-3';
+
                     // Color coding based on density
                     const densityClass = density >= 90 ? 'ratio-good' :
-                                       density >= 70 ? 'ratio-15-2' :
-                                       density >= 50 ? 'ratio-2-3' : 'ratio-above-3';
-                    
+                        density >= 70 ? 'ratio-15-2' :
+                            density >= 50 ? 'ratio-2-3' : 'ratio-above-3';
+
                     // Color coding based on internal/leaf ratio
                     const ratioClass = ratio <= 0.005 ? 'ratio-good' :
-                                     ratio <= 0.01 ? 'ratio-15-2' :
-                                     ratio <= 0.02 ? 'ratio-2-3' : 'ratio-above-3';
-                    
+                        ratio <= 0.01 ? 'ratio-15-2' :
+                            ratio <= 0.02 ? 'ratio-2-3' : 'ratio-above-3';
+
                     row.innerHTML = `
                         <td>${type}</td>
                         <td class="size-cell ${fragClass}">${fragmentation.toFixed(2)}%</td>
@@ -524,8 +562,37 @@
                 });
 
                 // Update comparison view title
-                document.getElementById('comparison-metric-title').textContent = 
+                document.getElementById('comparison-metric-title').textContent =
                     `Index Health Score at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
+            } else if (selectedMetric === 'selector-metric-system') {
+                // Find minimum values for the selected data
+                const minCPU = Math.min(...Object.values(filteredData).map(s => parseFloat(s.cpu_usage_percent || "0")));
+                const minRAM = Math.min(...Object.values(filteredData).map(s => parseFloat(s.ram_usage_mb || "0")));
+                const minRAMPercent = Math.min(...Object.values(filteredData).map(s => parseFloat(s.ram_usage_percent || "0")));
+
+                // Add rows for each selected ID type
+                selectedTypes.forEach(idType => {
+                    const stats = filteredData[idType];
+                    if (!stats) return;
+
+                    const row = document.createElement('tr');
+
+                    const cpuUsage = parseFloat(stats.cpu_usage_percent || "0");
+                    const ramUsage = parseFloat(stats.ram_usage_mb || "0");
+                    const ramPercent = parseFloat(stats.ram_usage_percent || "0");
+
+                    const cpuRatio = minCPU > 0 ? cpuUsage / minCPU : 1;
+                    const ramRatio = minRAM > 0 ? ramUsage / minRAM : 1;
+                    const ramPercentRatio = minRAMPercent > 0 ? ramPercent / minRAMPercent : 1;
+
+                    row.innerHTML = `
+                        <td>${idType}</td>
+                        <td class="size-cell ${colorize(cpuRatio)}">${cpuUsage.toFixed(2)}% (&times;${cpuRatio.toFixed(2)})</td>
+                        <td class="size-cell ${colorize(ramRatio)}">${ramUsage.toFixed(2)} MB (&times;${ramRatio.toFixed(2)})</td>
+                        <td class="size-cell ${colorize(ramPercentRatio)}">${ramPercent.toFixed(2)}% (&times;${ramPercentRatio.toFixed(2)})</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
             }
 
             // Always update the comparison view
@@ -538,7 +605,7 @@
             const activeSelectors = document.querySelectorAll('#selectors_system .selector-active[data-name]');
             const selectedTypes = Array.from(activeSelectors).map(el => el.dataset.name);
             const selectedMetric = document.querySelector('#selectors_metric .selector-active').id;
-            
+
             // Filter data for selected types
             const filteredData = {};
             selectedTypes.forEach(type => {
@@ -547,7 +614,7 @@
                 }
             });
 
-            let scores;
+            let scores = [];
             if (selectedMetric === 'selector-metric-size') {
                 // Calculate efficiency scores based on total table size (inverse of size ratio)
                 const minTotalSize = Math.min(...Object.values(filteredData).map(s => parseInt(s.total_table_size)));
@@ -555,7 +622,7 @@
                     type,
                     score: (minTotalSize / parseInt(stats.total_table_size)) * 100
                 }));
-                document.getElementById('comparison-metric-title').textContent = 
+                document.getElementById('comparison-metric-title').textContent =
                     `Storage Efficiency at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
             } else if (selectedMetric === 'selector-metric-rate') {
                 // Calculate efficiency scores based on insertion rate
@@ -564,11 +631,11 @@
                     recordsPerSecond: (stats.count / stats.duration)
                 }));
                 const maxRate = Math.max(...rates.map(r => r.recordsPerSecond));
-                scores = rates.map(({type, recordsPerSecond}) => ({
+                scores = rates.map(({ type, recordsPerSecond }) => ({
                     type,
                     score: (recordsPerSecond / maxRate) * 100
                 }));
-                document.getElementById('comparison-metric-title').textContent = 
+                document.getElementById('comparison-metric-title').textContent =
                     `Insertion Rate Efficiency at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
             } else if (selectedMetric === 'selector-metric-fragmentation') {
                 // Calculate fragmentation scores (lower is better)
@@ -579,18 +646,39 @@
                     const score = (100 - fragmentation) * (density / 100);
                     return { type, score };
                 });
-                document.getElementById('comparison-metric-title').textContent = 
+                document.getElementById('comparison-metric-title').textContent =
                     `Index Health Score at ${parseInt(selectedCount).toLocaleString()} records (higher is better)`;
-            }
+            } else if (selectedMetric === 'selector-metric-system') {
+                document.getElementById('comparison-metric-title').textContent = 'System Resource Efficiency (lower is better)';
 
-            // Sort by score descending
-            scores.sort((a, b) => b.score - a.score);
+                // Calculate a composite score based on CPU and RAM usage
+                // Lower score is better (less resource usage)
+                scores = Object.entries(filteredData).map(([type, stats]) => {
+                    const cpuUsage = parseFloat(stats.cpu_usage_percent || "0");
+                    const ramUsage = parseFloat(stats.ram_usage_mb || "0");
+
+                    // Normalize the values (higher is worse)
+                    const maxCPU = Math.max(...Object.values(filteredData).map(s => parseFloat(s.cpu_usage_percent || "0")));
+                    const maxRAM = Math.max(...Object.values(filteredData).map(s => parseFloat(s.ram_usage_mb || "0")));
+
+                    const normalizedCPU = maxCPU > 0 ? cpuUsage / maxCPU : 0;
+                    const normalizedRAM = maxRAM > 0 ? ramUsage / maxRAM : 0;
+
+                    // Composite score (50% CPU, 50% RAM) - lower is better
+                    const score = 100 - ((normalizedCPU * 50) + (normalizedRAM * 50));
+
+                    return { type, score, cpuUsage, ramUsage };
+                });
+
+                // Sort by score descending (higher score = better)
+                scores.sort((a, b) => b.score - a.score);
+            }
 
             // Update comparison view
             const comparisonBody = document.getElementById('comparison-body');
             comparisonBody.innerHTML = '';
 
-            scores.forEach(({type, score}) => {
+            scores.forEach(({ type, score }) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="summary-name">${type}</td>
@@ -611,7 +699,7 @@
                 selector.className = 'selector selector-active';
                 selector.dataset.name = idType;
                 selector.textContent = idType;
-                selector.addEventListener('click', function(e) {
+                selector.addEventListener('click', function (e) {
                     e.preventDefault();
                     this.classList.toggle('selector-active');
                     updateTable();
@@ -621,7 +709,7 @@
 
             // Initialize metric selectors
             document.querySelectorAll('#selectors_metric .selector').forEach(selector => {
-                selector.addEventListener('click', function(e) {
+                selector.addEventListener('click', function (e) {
                     e.preventDefault();
                     document.querySelectorAll('#selectors_metric .selector').forEach(s => {
                         s.classList.remove('selector-active');
@@ -633,27 +721,27 @@
 
             // Initialize scale selectors dynamically
             const scaleContainer = document.getElementById('selectors_scale');
-            
+
             // Use row counts from the JSON data
             const sortedCounts = data.RowCounts.sort((a, b) => a - b);
-            
+
             // Create scale selectors
             sortedCounts.forEach((count, index) => {
                 const selector = document.createElement('a');
                 selector.className = 'selector';
                 selector.dataset.value = count.toString();
                 // Format the count (e.g., 1000 -> "1 thousand")
-                const formatted = count >= 1000000 ? 
-                    `${count/1000000} million` : 
-                    `${count/1000} thousand`;
+                const formatted = count >= 1000000 ?
+                    `${count / 1000000} million` :
+                    `${count / 1000} thousand`;
                 selector.textContent = formatted;
-                
+
                 // Make the largest scale active by default
                 if (index === sortedCounts.length - 1) {
                     selector.classList.add('selector-active');
                 }
-                
-                selector.addEventListener('click', function(e) {
+
+                selector.addEventListener('click', function (e) {
                     e.preventDefault();
                     document.querySelectorAll('#selectors_scale .selector').forEach(s => {
                         s.classList.remove('selector-active');
@@ -664,10 +752,10 @@
                 scaleContainer.appendChild(selector);
             });
 
-            document.getElementById('select-all-systems').addEventListener('click', function(e) {
+            document.getElementById('select-all-systems').addEventListener('click', function (e) {
                 e.preventDefault();
                 const isDeselecting = document.querySelectorAll('#selectors_system .selector-active[data-name]').length === idTypes.length;
-                
+
                 document.querySelectorAll('#selectors_system .selector[data-name]').forEach(selector => {
                     if (isDeselecting) {
                         selector.classList.remove('selector-active');
@@ -675,7 +763,7 @@
                         selector.classList.add('selector-active');
                     }
                 });
-                
+
                 this.classList.toggle('selector-active', !isDeselecting);
                 updateTable();
             });
@@ -712,7 +800,7 @@
             const sunIcon = document.querySelector('.sun-icon');
             const moonIcon = document.querySelector('.moon-icon');
             const themeText = document.querySelector('.theme-text');
-            
+
             if (root.classList.contains('light-theme')) {
                 root.classList.remove('light-theme');
                 themeText.textContent = 'Switch to Light Mode';
@@ -747,10 +835,11 @@
 
         // Add this to the toggleTheme function
         const originalToggleTheme = toggleTheme;
-        toggleTheme = function() {
+        toggleTheme = function () {
             originalToggleTheme();
             saveThemePreference(document.documentElement.classList.contains('light-theme'));
         };
     </script>
 </body>
-</html> 
+
+</html>

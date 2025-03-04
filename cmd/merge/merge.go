@@ -93,6 +93,9 @@ This command should be run after generating test data for all ID types.`,
 						"index_internal_pages", "index_leaf_pages",
 						"index_density", "index_fragmentation",
 						"index_internal_to_leaf_ratio",
+						// Add the new system metrics fields
+						"cpu_usage_percent", "ram_usage_mb",
+						"ram_usage_percent", "total_ram_mb",
 					}
 
 					for _, field := range requiredFields {

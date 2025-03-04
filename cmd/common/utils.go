@@ -108,8 +108,10 @@ func RunTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64) (float64, map[
 		return 0, nil, err
 	}
 
-	// Insert generated IDs
-	err = g.BulkWriteRecords(ctx, pool, count)
+	// Measure system resources during the bulk write operation
+	systemMetrics, err := MeasureSystemResources(func() error {
+		return g.BulkWriteRecords(ctx, pool, count)
+	})
 	if err != nil {
 		return 0, nil, err
 	}
@@ -142,6 +144,12 @@ func RunTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64) (float64, map[
 
 	// Add the count to the convertedStats map
 	convertedStats["count"] = fmt.Sprintf("%d", count)
+
+	// Add system metrics to the stats
+	systemMetricsMap := systemMetrics.AsMap()
+	for k, v := range systemMetricsMap {
+		convertedStats[k] = v
+	}
 
 	// Commit the transaction
 	err = tx.Commit(ctx)
