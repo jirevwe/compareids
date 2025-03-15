@@ -8,7 +8,7 @@ type TestResult struct {
 	Stats    map[string]string
 }
 
-// TemplateData represents the structure of the template_data.json file
+// TemplateData represents the structure of the data.json file
 type TemplateData struct {
 	Data      map[string][]map[string]interface{} `json:"Data"`
 	IDTypes   []string                            `json:"IDTypes"`
@@ -18,5 +18,5 @@ type TemplateData struct {
 // ResultsDir is the directory where individual test results are stored
 const ResultsDir = "results"
 
-// TemplateDataFile is the path to the template data file
-const TemplateDataFile = "template_data.json"
+// DataFile is the path to the template data file
+const DataFile = "data.json"

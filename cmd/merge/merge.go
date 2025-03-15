@@ -16,8 +16,8 @@ import (
 // Command represents the merge command
 var Command = &cobra.Command{
 	Use:   "merge",
-	Short: "Merge all test results into a single template_data.json file",
-	Long: `Merge all test results from the results directory into a single template_data.json file.
+	Short: "Merge all test results into a single data.json file",
+	Long: `Merge all test results from the results directory into a single data.json file.
 This command should be run after generating test data for all ID types.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Load all test results
@@ -93,7 +93,6 @@ This command should be run after generating test data for all ID types.`,
 						"index_internal_pages", "index_leaf_pages",
 						"index_density", "index_fragmentation",
 						"index_internal_to_leaf_ratio",
-						// Add the new system metrics fields
 						"cpu_usage_percent", "ram_usage_mb",
 						"ram_usage_percent", "total_ram_mb",
 					}
@@ -135,7 +134,7 @@ This command should be run after generating test data for all ID types.`,
 		}
 
 		// Write template data to JSON file
-		templateDataFile, err := os.Create(common.TemplateDataFile)
+		templateDataFile, err := os.Create(common.DataFile)
 		if err != nil {
 			log.Fatalf("Unable to create template data JSON file: %v\n", err)
 		}
@@ -147,7 +146,7 @@ This command should be run after generating test data for all ID types.`,
 			log.Fatalf("Unable to write template data to JSON file: %v\n", err)
 		}
 
-		fmt.Printf("Merged %d test results into %s\n", len(results), common.TemplateDataFile)
+		fmt.Printf("Merged %d test results into %s\n", len(results), common.DataFile)
 	},
 }
 

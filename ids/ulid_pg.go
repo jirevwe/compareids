@@ -51,15 +51,9 @@ func (u *ULIDPgGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Po
 
 func (u *ULIDPgGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) (map[string]any, error) {
 	stats := make(map[string]any)
-
-	err := LoadPGStatTuple(ctx, pool)
-	if err != nil {
-		return nil, err
-	}
-
 	var tableStats TableStats
 
-	err = pool.QueryRow(ctx, fmt.Sprintf(fmtStatsQuery, "ulid_pg_table", "ulid_pg_table", "ulid_pg_table")).Scan(
+	err := pool.QueryRow(ctx, fmt.Sprintf(fmtStatsQuery, "ulid_pg_table", "ulid_pg_table", "ulid_pg_table")).Scan(
 		&tableStats.TotalTableSize,
 		&tableStats.DataSize,
 		&tableStats.IndexSize,
@@ -87,9 +81,7 @@ func (u *ULIDPgGenerator) CollectStats(ctx context.Context, pool *pgxpool.Pool) 
 }
 
 func (u *ULIDPgGenerator) LoadULIDFunction(ctx context.Context, pool *pgxpool.Pool) error {
-	sql := `
-	CREATE EXTENSION IF NOT EXISTS ulid with schema public;
-	`
+	sql := `CREATE EXTENSION IF NOT EXISTS ulid with schema public;`
 	_, err := pool.Exec(ctx, sql)
 	return err
 }
