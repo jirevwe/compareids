@@ -9,14 +9,15 @@ import (
 )
 
 func TestStatsCollection(t *testing.T) {
+	ctx := context.Background()
+
 	connString := "postgres://postgres:postgres@localhost:5432/postgres"
-	pool, err := pgxpool.New(context.Background(), connString)
+	pool, err := pgxpool.New(ctx, connString)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer pool.Close()
 
-	ctx := context.Background()
 	generator := NewUUIDv4Generator()
 
 	// Clean up and recreate table
