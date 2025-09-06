@@ -12,6 +12,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/rs/xid v1.6.0
 	github.com/segmentio/ksuid v1.0.4
+	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.9.0
 	go.jetify.com/typeid v1.3.0
@@ -29,7 +30,6 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
