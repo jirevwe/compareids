@@ -1,7 +1,6 @@
 package id
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -39,7 +38,7 @@ Example: compareids id uuidv4 --count 10000`,
 			log.Fatalf("Unable to parse connection string: %v\n", err)
 		}
 
-		pool, err := pgxpool.NewWithConfig(context.Background(), config)
+		pool, err := pgxpool.NewWithConfig(cmd.Context(), config)
 		if err != nil {
 			log.Fatalf("Unable to create connection pool: %v\n", err)
 		}
@@ -47,13 +46,13 @@ Example: compareids id uuidv4 --count 10000`,
 
 		// Run the test
 		fmt.Printf("Running test for %s with %d rows...\n", generator.Name(), rowCount)
-		duration, stats, err := common.RunTest(pool, generator, rowCount)
+		duration, stats, err := common.RunTest(cmd.Context(), pool, generator, rowCount)
 		if err != nil {
 			log.Fatalf("Error running test: %v", err)
 		}
 
 		// Drop the table
-		if err = generator.DropTable(context.Background(), pool); err != nil {
+		if err = generator.DropTable(cmd.Context(), pool); err != nil {
 			log.Printf("Error dropping table: %v", err)
 		}
 

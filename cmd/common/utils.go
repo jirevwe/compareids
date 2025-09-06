@@ -86,9 +86,8 @@ func GetDefaultRowCounts() []uint64 {
 }
 
 // RunTest generates IDs and inserts them into the database
-func RunTest(pool *pgxpool.Pool, g ids.IDGenerator, count uint64) (float64, map[string]string, error) {
+func RunTest(ctx context.Context, pool *pgxpool.Pool, g ids.IDGenerator, count uint64) (float64, map[string]string, error) {
 	start := time.Now()
-	ctx := context.Background()
 
 	// Begin a transaction
 	tx, err := pool.Begin(ctx)
