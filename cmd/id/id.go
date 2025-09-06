@@ -23,6 +23,8 @@ var Command = &cobra.Command{
 Example: compareids id uuidv4 --count 10000`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+
 		idType := args[0]
 
 		// Get the ID generator
@@ -38,7 +40,7 @@ Example: compareids id uuidv4 --count 10000`,
 			log.Fatalf("Unable to parse connection string: %v\n", err)
 		}
 
-		pool, err := pgxpool.NewWithConfig(cmd.Context(), config)
+		pool, err := pgxpool.NewWithConfig(ctx, config)
 		if err != nil {
 			log.Fatalf("Unable to create connection pool: %v\n", err)
 		}
@@ -46,13 +48,13 @@ Example: compareids id uuidv4 --count 10000`,
 
 		// Run the test
 		fmt.Printf("Running test for %s with %d rows...\n", generator.Name(), rowCount)
-		duration, stats, err := common.RunTest(cmd.Context(), pool, generator, rowCount)
+		duration, stats, err := common.RunTest(ctx, pool, generator, rowCount)
 		if err != nil {
 			log.Fatalf("Error running test: %v", err)
 		}
 
 		// Drop the table
-		if err = generator.DropTable(cmd.Context(), pool); err != nil {
+		if err = generator.DropTable(ctx, pool); err != nil {
 			log.Printf("Error dropping table: %v", err)
 		}
 

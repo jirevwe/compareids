@@ -36,17 +36,6 @@ func (m *MongoIDGenerator) DropTable(ctx context.Context, pool *pgxpool.Pool) er
 	return err
 }
 
-func (m *MongoIDGenerator) InsertRecords(pool *pgxpool.Pool, count int64) error {
-	for i := int64(0); i < count; i++ {
-		id := m.Generate()
-		_, err := pool.Exec(context.Background(), "INSERT INTO mongoid_table (id) VALUES ($1)", id)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (m *MongoIDGenerator) BulkWriteRecords(ctx context.Context, pool *pgxpool.Pool, count uint64) error {
 	batch := &pgx.Batch{}
 	for i := uint64(1); i <= count; i++ {

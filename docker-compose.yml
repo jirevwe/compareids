@@ -1,0 +1,34 @@
+services:
+  ids:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      no_cache: true
+    depends_on:
+      - postgres
+    command: ["sh", "run.sh"]
+    volumes:
+      - ./data.json:/data.json
+      - ./results:/results
+  postgres:
+    image: postgres:15.2-alpine
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /data/postgres
+    volumes:
+      - postgresql_master_data:/data/postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgresql_master_data:
+  output_data:

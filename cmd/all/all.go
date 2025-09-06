@@ -23,6 +23,8 @@ var Command = &cobra.Command{
 	Long: `Run tests for all ID types with the default row counts and merge the results.
 This is equivalent to running the id command for each ID type and then the merge command.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+
 		// Get all ID types
 		idTypes := common.GetAllIDTypes()
 		rowCounts := common.GetDefaultRowCounts()
@@ -34,7 +36,7 @@ This is equivalent to running the id command for each ID type and then the merge
 			log.Fatalf("Unable to parse connection string: %v\n", err)
 		}
 
-		pool, err := pgxpool.NewWithConfig(cmd.Context(), config)
+		pool, err := pgxpool.NewWithConfig(ctx, config)
 		if err != nil {
 			log.Fatalf("Unable to create connection pool: %v\n", err)
 		}
@@ -52,7 +54,7 @@ This is equivalent to running the id command for each ID type and then the merge
 			for _, count := range rowCounts {
 				// Run the test
 				fmt.Printf("Running test for %s with %d rows...\n", generator.Name(), count)
-				duration, stats, err := common.RunTest(cmd.Context(), pool, generator, count)
+				duration, stats, err := common.RunTest(ctx, pool, generator, count)
 				if err != nil {
 					log.Printf("Error running test for %s with %d rows: %v", generator.Name(), count, err)
 					continue
@@ -76,7 +78,7 @@ This is equivalent to running the id command for each ID type and then the merge
 			}
 
 			// Drop the table
-			if err = generator.DropTable(cmd.Context(), pool); err != nil {
+			if err = generator.DropTable(ctx, pool); err != nil {
 				log.Printf("Error dropping table for %s: %v", generator.Name(), err)
 			}
 		}
