@@ -5,30 +5,103 @@ services:
       dockerfile: Dockerfile
       no_cache: true
     depends_on:
-      - postgres
-    command: ["sh", "run.sh"]
+      postgres:
+        condition: service_healthy
+    environment:
+      # Test configuration
+      - TEST_SCENARIO=${TEST_SCENARIO:-medium}
+      - MAX_ROWS=${MAX_ROWS:-1000000}
+      - PARALLEL_TESTS=${PARALLEL_TESTS:-1}
+      - RESULTS_DIR=/app/results
+      - CONFIG_DIR=/app/config
+
+      # Database configuration
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
     volumes:
-      - ./data.json:/data.json
-      - ./results:/results
+      - ./results:/app/results
+      - ./config:/app/config
+      - ./data.json:/app/data.json
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: ${MEMORY_LIMIT:-8G}
+          cpus: ${CPU_LIMIT:-4}
+        reservations:
+          memory: ${MEMORY_RESERVATION:-2G}
+          cpus: ${CPU_RESERVATION:-1}
+
   postgres:
-    image: postgres:15.2-alpine
-    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       PGDATA: /data/postgres
+      # PostgreSQL tuning for large datasets
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgresql_master_data:/data/postgres
+      - ./sql:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEMORY_LIMIT:-4G}
+          cpus: ${POSTGRES_CPU_LIMIT:-2}
+        reservations:
+          memory: ${POSTGRES_MEMORY_RESERVATION:-1G}
+          cpus: ${POSTGRES_CPU_RESERVATION:-0.5}
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=8
+      -c max_parallel_workers_per_gather=4
+      -c max_parallel_workers=8
+      -c max_parallel_maintenance_workers=4
+
+  # Optional: Monitoring service for long-running tests
+  monitoring:
+    image: prom/prometheus:latest
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+    profiles:
+      - monitoring
 
 volumes:
   postgresql_master_data:
-  output_data:
+  prometheus_data:

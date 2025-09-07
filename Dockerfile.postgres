@@ -1,0 +1,23 @@
+FROM postgres:15.2-alpine
+
+# Install build dependencies
+RUN apk add --no-cache \
+    git \
+    make \
+    build-base \
+    postgresql-dev \
+    && rm -rf /var/cache/apk/*
+
+# Install pg-ulid extension
+WORKDIR /tmp
+RUN git clone --depth 1 https://github.com/andrielfn/pg-ulid.git && \
+    cd pg-ulid && \
+    make install && \
+    cd .. && \
+    rm -rf pg-ulid
+
+# Clean up build dependencies
+RUN apk del git make build-base postgresql-dev
+
+# Reset working directory
+WORKDIR /

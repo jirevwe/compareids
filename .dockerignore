@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Results and data
+results/
+data.json
+
+# Environment files
+.env*
+env.*
+
+# Scripts (will be copied explicitly)
+run-*.sh
+setup.sh
+
+# Monitoring
+monitoring/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
